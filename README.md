@@ -15,8 +15,8 @@ uiuxprogramming/
 ├─ script.js
 ├─ README.md
 ├─ docs/
-│  ├─ 1주차-실행화면.png
-│  └─ 2주차-실행화면.png
+│  ├─ week1-screen.png  # 1주차 실행 화면
+│  └─ week2-screen.png  # 2주차 실행 화면
 └─ assets/
    └─ images/
       └─ service.jpg
