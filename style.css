@@ -137,3 +137,80 @@ h3 {
 .steps-list li + li {
   margin-top: 10px;
 }
+
+/* ---------- 소식 받기: 입력창과 버튼을 한 줄에 ---------- */
+.subscribe-section {
+  background-color: #eaf4f1;
+}
+
+.subscribe-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: 570px;
+}
+
+.email-field {
+  flex: 1;
+  margin: 0;
+  font-weight: 700;
+}
+
+input[type="email"] {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid #bfc4c3;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.primary-button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  background-color: #2f7d6f;
+  cursor: pointer;
+}
+
+/* ---------- 상태 피드백: hover / focus / active ---------- */
+.site-nav a {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.site-nav a:hover {
+  color: #236054;
+  background-color: #e0efeb;
+}
+
+.site-nav a:focus {
+  outline: 3px solid #8cc7ba;
+  outline-offset: 3px;
+}
+
+input[type="email"]:focus {
+  border-color: #2f7d6f;
+  outline: 3px solid #b6dcd3;
+  outline-offset: 2px;
+}
+
+.primary-button {
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.primary-button:hover {
+  background-color: #236054;
+}
+
+.primary-button:focus {
+  outline: 3px solid #8cc7ba;
+  outline-offset: 3px;
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+}
