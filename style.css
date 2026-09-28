@@ -214,3 +214,11 @@ input[type="email"]:focus {
 .primary-button:active {
   transform: translateY(1px);
 }
+
+/* ---------- 하단 정보 ---------- */
+.site-footer {
+  padding-top: 24px;
+  padding-bottom: 48px;
+  color: #747786;
+  font-size: 14px;
+}
