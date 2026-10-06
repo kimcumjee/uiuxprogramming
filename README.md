@@ -11,13 +11,15 @@
 ```
 uiuxprogramming/
 ├─ index.html
-├─ style.css          # 3주차에 작성
-├─ script.js
+├─ style.css          # 3주차 작성, 4주차에 반응형 규칙 추가
+├─ script.js          # 5주차에 작성
 ├─ README.md
 ├─ docs/
 │  ├─ week1-screen.png  # 1주차 실행 화면
 │  ├─ week2-screen.png  # 2주차 실행 화면
-│  └─ week3-screen.png  # 3주차 실행 화면
+│  ├─ week3-screen.png  # 3주차 실행 화면
+│  ├─ week4-tablet-768.png / week4-mobile-390.png
+│  └─ week5-before.png / week5-after.png
 └─ assets/
    └─ images/
       └─ service.jpg
@@ -30,6 +32,8 @@ uiuxprogramming/
 | 1주차 | 기본 HTML 문서 구조를 작성하고 제목과 문단을 내 서비스 내용으로 작성 |
 | 2주차 | header·main·section·footer 시맨틱 구조, 목록, 이미지, 최소 입력 영역, 내부 이동 링크로 확장 |
 | 3주차 | style.css 를 연결해 정보 위계·그룹·배치·상태 피드백을 CSS 로 구현 |
+| 4주차 | 유동 너비·Grid·미디어 쿼리로 데스크톱·태블릿·모바일에서 모두 읽을 수 있게 수정 |
+| 5주차 | script.js 를 연결해 알림 설정 저장 클릭에 문구·스타일·버튼 상태로 피드백 |
 
 ## 2주차에 바꾼 구조와 변경 이유
 
@@ -193,3 +197,120 @@ footer 글자색은 수업 예시의 `#747786` 을 그대로 쓰면 페이지 �
 `.feature-card` 에 hover 효과를 넣으면 화면은 생기 있어 보이지만, 카드는
 클릭할 수 있는 요소가 아닙니다. 눌러도 아무 일이 일어나지 않는 곳에 반응을
 주면 조작할 수 있다고 오해하게 되므로 적용하지 않았습니다.
+
+
+---
+
+# 4주차 반응형 수정 기록
+
+## 확인한 문제
+
+3주차까지는 넓은 화면만 기준으로 만들었습니다. 390px 에서 열어 보니
+세 가지가 함께 무너졌습니다.
+
+- 메뉴 네 개가 한 줄에 몰려 글자가 서로 붙었습니다.
+- 기능 카드 세 장이 `flex: 1` 로 가로를 나눠 가져 카드 하나의 글이
+  한 줄에 두세 글자만 들어갈 만큼 좁아졌습니다.
+- 서비스 소개의 이미지가 `width: 360px` 로 고정되어 있어 화면보다 넓어졌고,
+  이메일 입력창과 버튼이 서로를 밀어냈습니다.
+
+## 수정한 내용
+
+| 수정 | 적용한 선택자 |
+| --- | --- |
+| 콘텐츠가 화면 밖으로 나가지 않도록 유동 너비 적용 | `header, main, footer` 에 `width: 100%` + 기존 `max-width: 1100px` |
+| 메뉴가 한 줄에 몰리지 않게 줄바꿈 허용 | `nav` 에 `flex-wrap: wrap` |
+| 이미지를 부모 너비에 맞게 축소 | `.service-image` 를 `width: 100%` + `max-width: 360px` + `height: auto` |
+| 카드를 너비에 맞춰 자동 재배치 | `.features-list` 를 Flexbox 에서 Grid 로 교체 |
+| 768px 이하에서 한 열 구조로 전환 | `@media (max-width: 768px)` 한 개 |
+
+기능 카드는 `display: flex` 와 `flex: 1` 을 지우고 다음으로 바꾸었습니다.
+
+```css
+.features-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+```
+
+`auto-fit` 은 현재 너비에 들어갈 수 있는 만큼만 열을 만들고,
+`minmax(260px, 1fr)` 은 카드가 최소 260px 을 지키면서 남는 공간을 나눠 쓰게 합니다.
+Flexbox 였을 때는 카드가 끝없이 좁아졌지만, Grid 는 260px 아래로 좁아지는 대신
+열 수를 줄여 다음 줄로 넘깁니다.
+
+## 달라진 점
+
+네 가지 너비에서 직접 확인한 결과입니다.
+
+| 너비 | 결과 |
+| --- | --- |
+| 1100px | 콘텐츠가 가운데 놓이고 기능 카드가 3열 |
+| 769px | 미디어 쿼리가 아직 적용되지 않고, Grid 가 스스로 2열로 재배치 |
+| 768px | 메뉴·카드·폼이 모두 한 열로 바뀜 |
+| 390px | 가로 스크롤과 잘림 없이 모든 콘텐츠를 사용할 수 있음 |
+
+390px 에서도 가로 스크롤이 생기지 않고, 이미지는 292px 로 줄어 화면 안에 들어옵니다.
+모바일에서는 버튼에 `min-height: 48px` 을 주어 손가락으로 누르기 쉽게 했습니다.
+
+## 선택자 이름을 바꾼 이유
+
+3주차에는 `.site-header`, `.site-nav`, `.feature-list` 라는 이름을 썼지만
+4주차 기준에 맞춰 `header`, `nav`, `.features-list` 로 바꾸었습니다.
+우리 페이지에는 `header`, `nav`, `footer` 가 각각 하나씩만 있어 요소 선택자로도
+같은 결과가 나오고, 쓰지 않는 클래스가 HTML 에 남지 않습니다.
+
+---
+
+# 5주차 JavaScript 수정 기록
+
+## 추가한 기능
+
+알림 설정을 저장하는 버튼을 만들었습니다. 버튼을 누르면 세 가지가 함께 바뀝니다.
+
+| 바뀌는 것 | 사용한 방법 | 사용자가 받는 신호 |
+| --- | --- | --- |
+| 문구 | `saveMessage.textContent` | 무엇이 저장되었는지 글로 확인 |
+| 스타일 | `saveMessage.classList.add("is-saved")` | 색·배경·여백이 바뀌어 눈에 띔 |
+| 버튼 상태 | `textContent` 와 `disabled = true` | 저장이 끝나 더 누를 필요가 없음 |
+
+## 왜 세 가지를 함께 바꾸는가
+
+문구만 바꾸면 화면을 자세히 읽는 사람만 저장된 것을 압니다. 색만 바꾸면
+무엇이 저장되었는지 알 수 없습니다. 버튼이 그대로 남아 있으면 저장이 안 된 줄
+알고 다시 누르게 됩니다.
+
+세 가지가 함께 바뀌어야 사용자가 현재 상태를 확신할 수 있고,
+`disabled = true` 로 같은 저장이 반복되지 않습니다. 실제로 연속해서 세 번
+눌러도 저장은 한 번만 일어납니다.
+
+## 사용한 문법
+
+```js
+// 다시 대입하지 않는 값은 const, 실행 중 바뀌는 값은 let
+const beforeText = "아직 알림 시간을 저장하지 않았습니다.";  // String
+let saveCount = 0;                                        // Number
+let isSaved = false;                                      // Boolean
+
+// === 는 값과 자료형을 함께 비교합니다
+function makeSaveMessage(isSaved) {
+  if (isSaved === true) {
+    return afterText;
+  } else {
+    return beforeText;
+  }
+}
+
+// 지금 실행하지 않고 클릭한 순간에 실행하므로 괄호를 쓰지 않습니다
+saveButton.addEventListener("click", saveSettings);
+```
+
+`typeof` 로 세 변수의 자료형이 예상대로 `string`, `number`, `boolean` 인지
+Console 에서 확인했습니다. `1 === 1` 은 `true`, `1 === "1"` 은 Number 와 String
+이라 `false` 가 나오는 것도 함께 출력했습니다.
+
+## 접근성을 위해 더 한 것
+
+비활성 버튼의 배경색을 그대로 두면 흰 글자와의 대비가 낮아 글자가 잘 보이지
+않습니다. `#6b7674` 로 정해 대비 4.70:1 을 확보했습니다. 저장 완료 문구도
+배경 `#d8ece6` 위에서 5.94:1 입니다.
