@@ -19,9 +19,10 @@ a {
   text-decoration: none;
 }
 
-.site-header,
+header,
 main,
-.site-footer {
+footer {
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto;
   padding-left: 24px;
@@ -29,7 +30,7 @@ main,
 }
 
 /* ---------- 제목과 내비게이션의 위계 ---------- */
-.site-header {
+header {
   padding-top: 72px;
   padding-bottom: 48px;
 }
@@ -68,12 +69,13 @@ h3 {
   font-size: 18px;
 }
 
-.site-nav {
+nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
-.site-nav a {
+nav a {
   padding: 10px 14px;
   border-radius: 8px;
   font-weight: 700;
@@ -101,22 +103,28 @@ h3 {
 
 .service-image {
   display: block;
-  width: 360px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
   border-radius: 14px;
 }
 
 /* ---------- 주요 기능: 같은 그룹의 카드 ---------- */
-.feature-list {
-  display: flex;
-  gap: 20px;
+.features-list {
   margin: 0;
-  padding: 0;
-  list-style: none;
+  padding-left: 0;
+  list-style-type: none;
+  display: grid;
+  /* 들어갈 수 있는 만큼 열을 만들고,
+     각 카드는 최소 260px 부터 남은 공간까지 사용합니다. */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: stretch;
+  gap: 24px;
 }
 
 .feature-card {
-  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
   padding: 24px;
   border: 1px solid #cbe3dc;
   border-radius: 14px;
@@ -178,16 +186,16 @@ input[type="email"] {
 }
 
 /* ---------- 상태 피드백: hover / focus / active ---------- */
-.site-nav a {
+nav a {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.site-nav a:hover {
+nav a:hover {
   color: #236054;
   background-color: #e0efeb;
 }
 
-.site-nav a:focus {
+nav a:focus {
   outline: 3px solid #8cc7ba;
   outline-offset: 3px;
 }
@@ -216,7 +224,7 @@ input[type="email"]:focus {
 }
 
 /* ---------- 하단 정보 ---------- */
-.site-footer {
+footer {
   padding-top: 24px;
   padding-bottom: 48px;
   color: #6b6e7c;
