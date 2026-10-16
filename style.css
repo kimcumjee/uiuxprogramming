@@ -438,6 +438,166 @@ body.dark footer {
 }
 
 
+/* ---------- 오늘 기록 남기기 흐름 ---------- */
+#recordFlow {
+  margin-top: 24px;
+}
+
+#recordProgress {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: #236054;
+  font-size: 14px;
+  font-weight: 700;
+  background-color: #d8ece6;
+}
+
+.record-step {
+  padding: 24px;
+  border: 1px solid #e0e4e3;
+  border-radius: 12px;
+  background-color: #f7faf9;
+}
+
+.record-step[hidden],
+#recordFlow[hidden],
+#focusHelp[hidden] {
+  display: none;
+}
+
+.record-step label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.record-step input,
+.record-step select {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #bfc4c3;
+  border-radius: 8px;
+  font: inherit;
+  background-color: #ffffff;
+}
+
+.record-step input:focus,
+.record-step select:focus {
+  border-color: #2f7d6f;
+  outline: 3px solid #b6dcd3;
+  outline-offset: 2px;
+}
+
+/* 오류는 무엇이 잘못됐는지와 어떻게 고칠지를 함께 알립니다. */
+#recordError {
+  margin-top: 12px;
+  margin-bottom: 0;
+  color: #9d2439;
+  font-weight: 700;
+}
+
+#recordError:empty {
+  display: none;
+}
+
+.record-step .has-error {
+  border-color: #9d2439;
+}
+
+#focusHelp {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  color: #45463f;
+  background-color: #fbf3dd;
+}
+
+#recordSummary,
+#recordDone {
+  margin-top: 0;
+  padding: 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  background-color: #d8ece6;
+  color: #236054;
+}
+
+.record-step button {
+  margin-top: 20px;
+  margin-right: 8px;
+}
+
+.secondary-button {
+  padding: 12px 18px;
+  border: 1px solid #2f7d6f;
+  border-radius: 8px;
+  color: #236054;
+  font: inherit;
+  font-weight: 700;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.secondary-button:hover {
+  color: #ffffff;
+  background-color: #2f7d6f;
+}
+
+.secondary-button:focus {
+  outline: 3px solid #8cc7ba;
+  outline-offset: 3px;
+}
+
+/* 어두운 테마에서의 기록 흐름 */
+body.dark .record-step {
+  border-color: #3c4442;
+  background-color: #262b2a;
+}
+
+body.dark .record-step input,
+body.dark .record-step select {
+  border-color: #4c5553;
+  color: #f1f3f2;
+  background-color: #1b1f1e;
+}
+
+body.dark #recordError {
+  color: #f0a0ad;
+}
+
+body.dark .record-step .has-error {
+  border-color: #f0a0ad;
+}
+
+body.dark #recordProgress,
+body.dark #recordSummary,
+body.dark #recordDone {
+  color: #9fd9cb;
+  background-color: #23302c;
+}
+
+body.dark #focusHelp {
+  color: #f0e4c0;
+  background-color: #332e1f;
+}
+
+body.dark .secondary-button {
+  border-color: #7fc4b4;
+  color: #9fd9cb;
+  background-color: #262b2a;
+}
+
+body.dark .secondary-button:hover {
+  color: #11201c;
+  background-color: #7fc4b4;
+}
+
+
 /* ---------- 웹페이지가 표시되는 가로 폭이 768px 이하일 때만 적용 ---------- */
 @media (max-width: 768px) {
   body {
@@ -527,5 +687,15 @@ body.dark footer {
 
   .panel {
     padding: 20px;
+  }
+
+  .record-step {
+    padding: 16px;
+  }
+
+  .record-step button {
+    width: 100%;
+    margin-top: 12px;
+    margin-right: 0;
   }
 }
