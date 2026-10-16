@@ -10,8 +10,8 @@
   <!--
   사용자: 혼자 공부하지만 며칠 지나면 기록이 끊기는 대학생과 자격증 준비생
   목적: 하루한칸이 어떤 서비스이고 기록이 왜 한 칸으로 남는지 이해한다.
-  핵심 행동: 필요한 영역으로 이동하고, 알림 설정을 저장하고, 이메일로 출시 소식을 신청한다.
-  정보 순서: 서비스 소개 → 주요 기능 → 이용 방법 → 알림 설정 → 소식 받기
+  핵심 행동: 서비스 정보를 탭으로 바꿔 보고, 알림과 이용 설정을 조작하고, 이메일로 출시 소식을 신청한다.
+  정보 순서: 서비스 소개 → 서비스 정보 → 알림 설정 → 이용 설정 → 소식 받기
   -->
 
   <header>
@@ -21,9 +21,9 @@
 
     <nav aria-label="주요 메뉴">
       <a href="#about">서비스 소개</a>
-      <a href="#features">주요 기능</a>
-      <a href="#steps">이용 방법</a>
+      <a href="#features">서비스 정보</a>
       <a href="#notify">알림 설정</a>
+      <a href="#interaction-practice">이용 설정</a>
       <a href="#subscribe">소식 받기</a>
     </nav>
   </header>
@@ -53,30 +53,67 @@
     </section>
 
     <section id="features" class="content-section">
-      <h2>주요 기능</h2>
-      <ul class="features-list">
-        <li class="feature-card">
-          <h3>한 줄 기록</h3>
-          <p>과목과 공부한 시간만 입력하면 끝입니다. 10초면 오늘 칸이 채워집니다.</p>
-        </li>
-        <li class="feature-card">
-          <h3>한눈에 보는 달력</h3>
-          <p>한 달을 한 화면에서 봅니다. 어느 요일에 자주 빠지는지 바로 보입니다.</p>
-        </li>
-        <li class="feature-card">
-          <h3>연속 일수 알림</h3>
-          <p>며칠 연속으로 기록했는지 보여 주고, 기록이 없는 날 저녁에 한 번만 알립니다.</p>
-        </li>
-      </ul>
-    </section>
+      <h2>서비스 정보</h2>
 
-    <section id="steps" class="content-section">
-      <h2>이용 방법</h2>
-      <ol class="steps-list">
-        <li>이번 학기에 공부할 과목을 등록합니다.</li>
-        <li>공부를 마치면 과목과 시간을 한 줄로 기록합니다.</li>
-        <li>달력에서 채워진 칸과 연속 일수를 확인합니다.</li>
-      </ol>
+      <div class="tabs" role="tablist" aria-label="서비스 정보 선택">
+        <button id="tab-features" class="tab is-active" type="button"
+          role="tab" aria-selected="true"
+          aria-controls="panel-features" data-target="#panel-features">
+          주요 기능
+        </button>
+        <button id="tab-steps" class="tab" type="button"
+          role="tab" aria-selected="false"
+          aria-controls="panel-steps" data-target="#panel-steps">
+          이용 방법
+        </button>
+        <button id="tab-faq" class="tab" type="button"
+          role="tab" aria-selected="false"
+          aria-controls="panel-faq" data-target="#panel-faq">
+          자주 묻는 질문
+        </button>
+      </div>
+
+      <div id="panel-features" class="panel is-active" role="tabpanel"
+        aria-labelledby="tab-features">
+        <h3>주요 기능</h3>
+        <ul class="features-list">
+          <li class="feature-card">
+            <h4>한 줄 기록</h4>
+            <p>과목과 공부한 시간만 입력하면 끝입니다. 10초면 오늘 칸이 채워집니다.</p>
+          </li>
+          <li class="feature-card">
+            <h4>한눈에 보는 달력</h4>
+            <p>한 달을 한 화면에서 봅니다. 어느 요일에 자주 빠지는지 바로 보입니다.</p>
+          </li>
+          <li class="feature-card">
+            <h4>연속 일수 알림</h4>
+            <p>며칠 연속으로 기록했는지 보여 주고, 기록이 없는 날 저녁에 한 번만 알립니다.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div id="panel-steps" class="panel" role="tabpanel"
+        aria-labelledby="tab-steps" hidden>
+        <h3>이용 방법</h3>
+        <ol class="steps-list">
+          <li>이번 학기에 공부할 과목을 등록합니다.</li>
+          <li>공부를 마치면 과목과 시간을 한 줄로 기록합니다.</li>
+          <li>달력에서 채워진 칸과 연속 일수를 확인합니다.</li>
+        </ol>
+      </div>
+
+      <div id="panel-faq" class="panel" role="tabpanel"
+        aria-labelledby="tab-faq" hidden>
+        <h3>자주 묻는 질문</h3>
+        <dl class="faq-list">
+          <dt>하루를 빠뜨리면 기록이 초기화되나요?</dt>
+          <dd>아닙니다. 연속 일수만 다시 1일부터 세고, 지금까지 채운 칸은 그대로 남습니다.</dd>
+          <dt>공부 시간을 분 단위로 적어야 하나요?</dt>
+          <dd>10분 단위면 충분합니다. 정확한 시간보다 매일 남기는 것이 목적입니다.</dd>
+          <dt>알림을 받지 않고 쓸 수도 있나요?</dt>
+          <dd>네. 알림 설정에서 저장하지 않으면 알림 없이 기록만 할 수 있습니다.</dd>
+        </dl>
+      </div>
     </section>
 
     <section id="notify" class="content-section">
@@ -84,6 +121,42 @@
       <p>기록이 없는 날 저녁에 한 번만 알려 드립니다. 받고 싶은 시간을 미리 저장해 두세요.</p>
       <p id="saveMessage">아직 알림 시간을 저장하지 않았습니다.</p>
       <button id="saveButton" class="primary-button" type="button">저녁 9시로 저장</button>
+    </section>
+
+    <section id="interaction-practice" class="content-section settings-panel">
+      <h2>이용 설정</h2>
+
+      <div class="interaction-item">
+        <h3>화면 테마</h3>
+        <p>밤에 기록할 때 눈이 덜 부시도록 어두운 테마로 바꿀 수 있습니다.</p>
+        <button id="themeButton" class="primary-button" type="button">
+          어두운 테마로 바꾸기
+        </button>
+      </div>
+
+      <div class="interaction-item">
+        <label for="userName">달력에 표시할 이름</label>
+        <input
+          id="userName"
+          type="text"
+          maxlength="10"
+          placeholder="10자 이내로 입력"
+        >
+        <p id="userNameCount" aria-live="polite">0 / 10</p>
+      </div>
+
+      <div class="interaction-item">
+        <label class="agree-row" for="agreeCheck">
+          <input id="agreeCheck" type="checkbox">
+          기록은 내 기기에만 저장된다는 안내를 확인했습니다.
+        </label>
+        <p id="agreeMessage" aria-live="polite">
+          안내를 확인해야 기록을 시작할 수 있습니다.
+        </p>
+        <button id="startButton" class="primary-button" type="button" disabled>
+          오늘 기록 시작하기
+        </button>
+      </div>
     </section>
 
     <section id="subscribe" class="content-section subscribe-section">
