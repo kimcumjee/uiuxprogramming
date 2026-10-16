@@ -59,3 +59,91 @@ function saveSettings() {
    saveSettings() 로 적지 않습니다. 지금 실행하는 것이 아니라
    클릭이 발생한 순간 브라우저가 실행해야 하기 때문입니다. */
 saveButton.addEventListener("click", saveSettings);
+
+
+/* ===================================================================
+   6주차 · 이벤트 처리와 동적 UI
+   =================================================================== */
+
+/* ---------- 이용 설정: 여섯 요소 선택 ---------- */
+const themeButton = document.querySelector("#themeButton");
+const userNameInput = document.querySelector("#userName");
+const userNameCount = document.querySelector("#userNameCount");
+const agreeCheck = document.querySelector("#agreeCheck");
+const agreeMessage = document.querySelector("#agreeMessage");
+const startButton = document.querySelector("#startButton");
+
+/* ---------- click: 테마와 버튼 문구 전환 ----------
+   toggle 은 클래스가 없으면 추가하고 있으면 제거한 뒤
+   현재 상태를 Boolean 으로 돌려줍니다. */
+function handleThemeClick() {
+  const isDark = document.body.classList.toggle("dark");
+  themeButton.textContent = isDark
+    ? "밝은 테마로 바꾸기"
+    : "어두운 테마로 바꾸기";
+}
+
+themeButton.addEventListener("click", handleThemeClick);
+
+/* ---------- input: 입력하는 동안 글자 수 표시 ----------
+   input 은 글자를 쓰거나 지울 때마다 발생합니다. */
+function handleUserNameInput() {
+  const currentLength = userNameInput.value.length;
+  userNameCount.textContent = currentLength + " / 10";
+}
+
+userNameInput.addEventListener("input", handleUserNameInput);
+
+/* ---------- change: 체크 상태로 안내 문구와 버튼 전환 ----------
+   change 는 선택 상태가 달라졌을 때 발생합니다.
+   agreed 하나를 기준으로 문구·클래스·버튼 상태를 함께 바꿉니다. */
+function handleAgreeChange() {
+  const agreed = agreeCheck.checked;
+
+  startButton.disabled = !agreed;
+  agreeMessage.textContent = agreed
+    ? "확인이 끝났습니다. 오늘 기록을 시작할 수 있습니다."
+    : "안내를 확인해야 기록을 시작할 수 있습니다.";
+  agreeMessage.classList.toggle("is-ready", agreed);
+}
+
+agreeCheck.addEventListener("change", handleAgreeChange);
+
+/* ---------- 탭: 여러 요소를 한꺼번에 선택 ----------
+   querySelector 는 하나, querySelectorAll 은 모두 찾습니다. */
+const tabs = document.querySelectorAll(".tab");
+const panels = document.querySelectorAll(".panel");
+
+// 기존 선택 상태를 모두 해제합니다.
+function resetTabsAndPanels() {
+  tabs.forEach(function (tab) {
+    tab.classList.remove("is-active");
+    tab.setAttribute("aria-selected", "false");
+  });
+
+  panels.forEach(function (panel) {
+    panel.classList.remove("is-active");
+    panel.hidden = true;
+  });
+}
+
+// 클릭한 탭과 data-target 으로 연결된 패널 하나만 켭니다.
+function activateTab(clickedTab) {
+  const targetSelector = clickedTab.dataset.target;
+  const targetPanel = document.querySelector(targetSelector);
+
+  clickedTab.classList.add("is-active");
+  clickedTab.setAttribute("aria-selected", "true");
+  targetPanel.classList.add("is-active");
+  targetPanel.hidden = false;
+}
+
+// 먼저 모두 끄고, 그다음 하나만 켜야 항상 한 개만 열립니다.
+function handleTabClick(event) {
+  resetTabsAndPanels();
+  activateTab(event.currentTarget);
+}
+
+tabs.forEach(function (tab) {
+  tab.addEventListener("click", handleTabClick);
+});
