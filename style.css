@@ -490,7 +490,8 @@ body.dark footer {
     align-items: stretch;
   }
 
-  input,
+  /* 체크박스는 제외합니다. 전체 폭으로 늘어나면 안 됩니다. */
+  input:not([type="checkbox"]),
   button {
     width: 100%;
   }
