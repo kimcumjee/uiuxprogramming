@@ -508,6 +508,13 @@ body.dark footer {
   border-color: #9d2439;
 }
 
+/* 오류 칸에 포커스가 가도 오류 표시가 가려지지 않게 합니다. */
+.record-step input.has-error:focus,
+.record-step select.has-error:focus {
+  border-color: #9d2439;
+  outline: 3px solid #e6b3bd;
+}
+
 #focusHelp {
   margin-top: 12px;
   padding: 12px;
@@ -572,6 +579,12 @@ body.dark #recordError {
 
 body.dark .record-step .has-error {
   border-color: #f0a0ad;
+}
+
+body.dark .record-step input.has-error:focus,
+body.dark .record-step select.has-error:focus {
+  border-color: #f0a0ad;
+  outline: 3px solid #7d3b45;
 }
 
 body.dark #recordProgress,
