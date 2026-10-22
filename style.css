@@ -611,6 +611,374 @@ body.dark .secondary-button:hover {
 }
 
 
+/* ---------- 중간고사 · 이번 주 기록 ---------- */
+#weekBoard[hidden],
+#dayDetail[hidden],
+#dayRecords[hidden],
+#dayEmpty[hidden],
+#deleteConfirm[hidden],
+#searchClear[hidden] {
+  display: none;
+}
+
+/* 제목은 스크립트로 포커스를 옮기기 위한 대상이라 테두리를 그리지 않습니다. */
+#weekBoardTitle:focus {
+  outline: none;
+}
+
+#streakMessage {
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: #236054;
+  font-weight: 700;
+  background-color: #d8ece6;
+}
+
+/* 오늘 칸이 비어 있을 때는 경고가 아닌 '기다리는' 색으로 보여 줍니다. */
+#streakMessage.is-waiting {
+  color: #45463f;
+  background-color: #fbf3dd;
+}
+
+/* 7칸을 항상 한 줄에 둡니다. minmax(0, 1fr) 이라 좁은 화면에서도 넘치지 않습니다. */
+.week-cells {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.week-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 92px;
+  padding: 8px 4px;
+  border: 2px dashed #bfc4c3;
+  border-radius: 12px;
+  color: #5e6272;
+  font: inherit;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.week-cell:hover {
+  background-color: #eaf4f1;
+}
+
+.cell-day {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cell-date {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cell-count {
+  font-size: 12px;
+}
+
+/* 기록이 있는 칸은 채워진 칸으로 보입니다. */
+.week-cell.is-filled {
+  border-style: solid;
+  border-color: #2f7d6f;
+  color: #ffffff;
+  background-color: #2f7d6f;
+}
+
+.week-cell.is-filled:hover {
+  background-color: #236054;
+}
+
+.week-cell.is-today {
+  border-width: 3px;
+}
+
+.week-cell.is-selected {
+  outline: 3px solid #292a31;
+  outline-offset: 3px;
+}
+
+.week-cell:focus {
+  outline: 3px solid #8cc7ba;
+  outline-offset: 3px;
+}
+
+/* 검색 중에는 찾은 칸만 또렷하게, 나머지는 흐리게 */
+.week-cells.is-searching .week-cell:not(.is-match) {
+  opacity: 0.35;
+}
+
+.week-cell.is-match {
+  box-shadow: 0 0 0 3px #e0a526;
+}
+
+/* 방금 채운 오늘 칸 */
+.week-cell.just-filled {
+  animation: cell-fill 0.5s ease;
+}
+
+@keyframes cell-fill {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .week-cell.just-filled {
+    animation: none;
+  }
+}
+
+.week-hint {
+  margin-top: 12px;
+  color: #5e6272;
+  font-size: 14px;
+}
+
+/* 과목으로 찾기 */
+.week-search {
+  margin-top: 24px;
+}
+
+.week-search label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.week-search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.week-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #bfc4c3;
+  border-radius: 8px;
+  font: inherit;
+  background-color: #ffffff;
+}
+
+.week-search input:focus {
+  border-color: #2f7d6f;
+  outline: 3px solid #b6dcd3;
+  outline-offset: 2px;
+}
+
+.week-search input.has-error,
+.week-search input.has-error:focus {
+  border-color: #9d2439;
+}
+
+.week-search input.has-error:focus {
+  outline: 3px solid #e6b3bd;
+}
+
+#searchMessage {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+#searchMessage:empty,
+#boardMessage:empty {
+  display: none;
+}
+
+#searchMessage.is-error {
+  color: #9d2439;
+  font-weight: 700;
+}
+
+#searchMessage.is-empty {
+  padding: 12px;
+  border-radius: 10px;
+  color: #45463f;
+  background-color: #fbf3dd;
+}
+
+#searchMessage.is-found {
+  padding: 12px;
+  border-radius: 10px;
+  color: #236054;
+  font-weight: 700;
+  background-color: #d8ece6;
+}
+
+/* 선택한 날짜의 기록 */
+.day-detail {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid #e0e4e3;
+  border-radius: 12px;
+  background-color: #f7faf9;
+}
+
+.day-records {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day-records li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e4e3;
+}
+
+.day-records li:last-child {
+  border-bottom: 0;
+}
+
+.day-records span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.day-records .secondary-button {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+}
+
+#dayEmpty {
+  margin-bottom: 0;
+  padding: 12px;
+  border-radius: 10px;
+  color: #5e6272;
+  background-color: #eceeed;
+}
+
+.delete-confirm {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #e6b3bd;
+  border-radius: 10px;
+  background-color: #fbecef;
+}
+
+.delete-confirm p {
+  font-weight: 700;
+}
+
+.delete-confirm button {
+  margin-right: 8px;
+}
+
+.danger-button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  background-color: #9d2439;
+  cursor: pointer;
+}
+
+.danger-button:hover {
+  background-color: #7d1c2d;
+}
+
+.danger-button:focus {
+  outline: 3px solid #e6b3bd;
+  outline-offset: 3px;
+}
+
+#boardMessage {
+  margin-top: 16px;
+  margin-bottom: 0;
+  padding: 12px;
+  border-radius: 10px;
+  color: #236054;
+  font-weight: 700;
+  background-color: #d8ece6;
+}
+
+#addRecordButton {
+  margin-top: 24px;
+}
+
+/* 어두운 테마에서의 이번 주 기록 */
+body.dark #streakMessage,
+body.dark #searchMessage.is-found,
+body.dark #boardMessage {
+  color: #9fd9cb;
+  background-color: #23302c;
+}
+
+body.dark #streakMessage.is-waiting,
+body.dark #searchMessage.is-empty {
+  color: #f0e4c0;
+  background-color: #332e1f;
+}
+
+body.dark #searchMessage.is-error {
+  color: #f0a0ad;
+}
+
+body.dark .week-cell {
+  border-color: #4c5553;
+  color: #c8d0ce;
+  background-color: #1b1f1e;
+}
+
+body.dark .week-cell:hover {
+  background-color: #23302c;
+}
+
+body.dark .week-cell.is-filled {
+  border-color: #7fc4b4;
+  color: #11201c;
+  background-color: #7fc4b4;
+}
+
+body.dark .week-cell.is-selected {
+  outline-color: #f1f3f2;
+}
+
+body.dark .day-detail {
+  border-color: #3c4442;
+  background-color: #262b2a;
+}
+
+body.dark .day-records li {
+  border-color: #3c4442;
+}
+
+body.dark #dayEmpty {
+  background-color: #1b1f1e;
+}
+
+body.dark .delete-confirm {
+  border-color: #7d3b45;
+  background-color: #33232a;
+}
+
+body.dark .week-search input {
+  border-color: #4c5553;
+  color: #f1f3f2;
+  background-color: #1b1f1e;
+}
+
+body.dark .week-search input.has-error {
+  border-color: #f0a0ad;
+}
+
+
 /* ---------- 웹페이지가 표시되는 가로 폭이 768px 이하일 때만 적용 ---------- */
 @media (max-width: 768px) {
   body {
@@ -709,6 +1077,45 @@ body.dark .secondary-button:hover {
   .record-step button {
     width: 100%;
     margin-top: 12px;
+    margin-right: 0;
+  }
+
+  /* 이번 주 기록: 7칸은 한 줄을 유지하고 글자만 줄입니다. */
+  .week-cells {
+    gap: 4px;
+  }
+
+  .week-cell {
+    min-height: 76px;
+    padding: 6px 2px;
+  }
+
+  .cell-date {
+    font-size: 17px;
+  }
+
+  .cell-day,
+  .cell-count {
+    font-size: 11px;
+  }
+
+  /* 검색창과 버튼을 한 열로 배치 */
+  .week-search-row {
+    flex-direction: column;
+  }
+
+  .day-detail {
+    padding: 16px;
+  }
+
+  /* 기록 한 줄과 지우기 버튼을 위아래로 배치 */
+  .day-records li {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .delete-confirm button {
+    margin-top: 8px;
     margin-right: 0;
   }
 }

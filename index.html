@@ -12,7 +12,9 @@
   목적: 하루한칸이 어떤 서비스이고 기록이 왜 한 칸으로 남는지 이해한다.
   핵심 행동: 안내를 확인하고 오늘 공부한 과목·시간·집중도를 입력해 기록 한 칸을 채운다.
   완료 조건: 확인 화면에서 입력 내용을 검토하고 '오늘 칸을 채웠습니다' 화면에 도달한다.
-  정보 순서: 서비스 소개 → 서비스 정보 → 알림 설정 → 이용 설정 → 오늘 기록 남기기 → 소식 받기
+  정보 순서: 서비스 소개 → 서비스 정보 → 알림 설정 → 이용 설정 → 오늘 기록 남기기 → 이번 주 기록 → 소식 받기
+  중간고사 추가: 기록을 마친 뒤 이번 주에 채운 칸과 연속 일수를 보고, 날짜별 기록을 열어 보고,
+  과목으로 찾거나 잘못 남긴 기록을 지운다.
   -->
 
   <header>
@@ -221,10 +223,53 @@
       <section class="record-step" data-step="4" hidden>
         <h3>오늘 칸을 채웠습니다</h3>
         <p id="recordDone"></p>
+        <button id="openWeekButton" class="primary-button" type="button">
+          이번 주 기록 보기
+        </button>
         <button id="recordRestart" class="secondary-button" type="button">
           다시 기록하기
         </button>
       </section>
+    </section>
+
+    <!-- 중간고사 · 이번 주 기록 보기 (기록 완료 화면의 [이번 주 기록 보기]로 열립니다) -->
+    <section id="weekBoard" class="content-section" hidden>
+      <h2 id="weekBoardTitle" tabindex="-1">이번 주 기록</h2>
+      <p id="streakMessage" aria-live="polite"></p>
+
+      <ol id="weekCells" class="week-cells" aria-label="최근 7일 기록 칸"></ol>
+      <p class="week-hint">최근 7일의 칸입니다. 칸을 누르면 그날 남긴 기록을 볼 수 있습니다.</p>
+
+      <form id="searchForm" class="week-search" novalidate>
+        <label for="searchSubject">과목으로 찾기</label>
+        <div class="week-search-row">
+          <input id="searchSubject" type="text" maxlength="20"
+            aria-describedby="searchMessage">
+          <button class="primary-button" type="submit">찾기</button>
+          <button id="searchClear" class="secondary-button" type="button" hidden>
+            검색 지우기
+          </button>
+        </div>
+        <p id="searchMessage" aria-live="polite"></p>
+      </form>
+
+      <div id="dayDetail" class="day-detail" hidden>
+        <h3 id="dayDetailTitle"></h3>
+        <ul id="dayRecords" class="day-records"></ul>
+        <p id="dayEmpty" hidden></p>
+
+        <div id="deleteConfirm" class="delete-confirm" hidden>
+          <p id="deleteConfirmText"></p>
+          <button id="deleteYes" class="danger-button" type="button">네, 지우기</button>
+          <button id="deleteNo" class="secondary-button" type="button">취소</button>
+        </div>
+
+        <p id="boardMessage" aria-live="polite"></p>
+      </div>
+
+      <button id="addRecordButton" class="secondary-button" type="button">
+        새 기록 더하기
+      </button>
     </section>
 
     <section id="subscribe" class="content-section subscribe-section">

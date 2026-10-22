@@ -246,13 +246,16 @@ document.querySelector("#recordBack3").addEventListener("click", function () {
 
 /* ---------- 완료 ---------- */
 document.querySelector("#recordComplete").addEventListener("click", function () {
+  // 중간고사: 완료한 기록을 오늘 칸에 저장해 이번 주 기록에 반영합니다.
+  saveTodayRecord();
   recordDone.textContent =
     recordSummary.textContent + " 기록을 저장했습니다.";
   showRecordStep(4);
 });
 
-/* ---------- 다시 시작: 입력·오류·선택·진행 상태를 모두 초기화 ---------- */
-document.querySelector("#recordRestart").addEventListener("click", function () {
+/* ---------- 다시 시작: 입력·오류·선택·진행 상태를 모두 초기화 ----------
+   이번 주 기록의 [새 기록 더하기]도 같은 함수로 흐름을 처음부터 엽니다. */
+function resetRecordFlow() {
   recordSubject.value = "";
   recordMinutes.value = "";
   recordFocus.value = "좋음";
@@ -262,4 +265,367 @@ document.querySelector("#recordRestart").addEventListener("click", function () {
   clearRecordError();
   showRecordStep(1);
   recordSubject.focus();
+}
+
+document.querySelector("#recordRestart").addEventListener("click", resetRecordFlow);
+
+
+/* ===================================================================
+   중간고사 · 이번 주 기록 보기
+   7주차 흐름의 끝(기록 완료)에서 이어지는 새 사용 경로입니다.
+   사용자 목표: 오늘 칸이 채워진 것을 확인하고, 이번 주에 꾸준히 했는지 본다.
+   새 행동: 날짜 칸 열어 보기 · 과목으로 찾기 · 잘못 남긴 기록 지우기
+   =================================================================== */
+
+const weekBoard = document.querySelector("#weekBoard");
+const weekBoardTitle = document.querySelector("#weekBoardTitle");
+const streakMessage = document.querySelector("#streakMessage");
+const weekCells = document.querySelector("#weekCells");
+const searchForm = document.querySelector("#searchForm");
+const searchInput = document.querySelector("#searchSubject");
+const searchMessage = document.querySelector("#searchMessage");
+const searchClear = document.querySelector("#searchClear");
+const dayDetail = document.querySelector("#dayDetail");
+const dayDetailTitle = document.querySelector("#dayDetailTitle");
+const dayRecords = document.querySelector("#dayRecords");
+const dayEmpty = document.querySelector("#dayEmpty");
+const deleteConfirm = document.querySelector("#deleteConfirm");
+const deleteConfirmText = document.querySelector("#deleteConfirmText");
+const boardMessage = document.querySelector("#boardMessage");
+
+const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+
+/* ---------- 날짜 도우미 ----------
+   기록은 "2026-10-22" 같은 날짜 문자열로 구분합니다. */
+function toDateKey(date) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return date.getFullYear() + "-" + month + "-" + day;
+}
+
+// 오늘에서 offset 일 전의 날짜 (0 이면 오늘)
+function daysAgo(offset) {
+  const date = new Date();
+  date.setDate(date.getDate() - offset);
+  return date;
+}
+
+// "10월 21일 (화)" 형태로 보여 줍니다.
+function formatDay(date) {
+  return (date.getMonth() + 1) + "월 " + date.getDate() + "일 (" +
+    dayNames[date.getDay()] + ")";
+}
+
+/* ---------- 기록 데이터 ----------
+   프로토타입이므로 지난 6일은 예시 기록을 넣어 둡니다.
+   4일 전은 일부러 비워 연속 일수가 끊긴 경우를 볼 수 있게 했습니다. */
+let records = [
+  { id: 1, date: toDateKey(daysAgo(6)), subject: "자료구조", minutes: 60, focus: "보통" },
+  { id: 2, date: toDateKey(daysAgo(5)), subject: "영어 단어", minutes: 30, focus: "좋음" },
+  { id: 3, date: toDateKey(daysAgo(3)), subject: "자료구조", minutes: 90, focus: "좋음" },
+  { id: 4, date: toDateKey(daysAgo(2)), subject: "운영체제", minutes: 45, focus: "아쉬움" },
+  { id: 5, date: toDateKey(daysAgo(1)), subject: "자료구조", minutes: 40, focus: "보통" },
+  { id: 6, date: toDateKey(daysAgo(1)), subject: "영어 단어", minutes: 20, focus: "좋음" }
+];
+let nextRecordId = 7;
+
+let selectedOffset = null;  // 지금 열어 둔 날짜 (오늘에서 며칠 전인지)
+let searchKeyword = "";     // 지금 적용된 검색어 (없으면 빈 문자열)
+let pendingDeleteId = null; // 지울지 확인하고 있는 기록
+let justFilled = false;     // 방금 채운 오늘 칸에 강조 효과를 줄지
+
+function getRecordsOn(date) {
+  const dateKey = toDateKey(date);
+  return records.filter(function (record) {
+    return record.date === dateKey;
+  });
+}
+
+function describeRecord(record) {
+  return record.subject + " · " + record.minutes + "분 · 집중도 " + record.focus;
+}
+
+function matchesKeyword(record, keyword) {
+  return record.subject.toLowerCase().includes(keyword.toLowerCase());
+}
+
+// 7주차 완료 버튼에서 호출합니다.
+function saveTodayRecord() {
+  records.push({
+    id: nextRecordId,
+    date: toDateKey(daysAgo(0)),
+    subject: recordSubject.value.trim(),
+    minutes: Number(recordMinutes.value),
+    focus: recordFocus.value
+  });
+  nextRecordId = nextRecordId + 1;
+
+  // 기록 보드가 이미 열려 있으면 오늘 칸을 바로 갱신합니다.
+  if (!weekBoard.hidden) {
+    selectedOffset = 0;
+    pendingDeleteId = null;
+    boardMessage.textContent = "";
+    justFilled = true;
+    renderBoard();
+  }
+}
+
+/* ---------- 연속 일수 ----------
+   오늘 칸이 비어 있으면 어제부터 셉니다.
+   오늘을 아직 안 했다고 연속 기록이 0 으로 보이면 의욕이 꺾이기 때문입니다. */
+function renderStreak() {
+  const todayFilled = getRecordsOn(daysAgo(0)).length > 0;
+  let offset = todayFilled ? 0 : 1;
+  let streak = 0;
+
+  while (offset <= 6 && getRecordsOn(daysAgo(offset)).length > 0) {
+    streak = streak + 1;
+    offset = offset + 1;
+  }
+
+  if (todayFilled) {
+    streakMessage.textContent = streak + "일 연속으로 칸을 채우고 있습니다.";
+  } else if (streak > 0) {
+    streakMessage.textContent = "오늘 칸이 비어 있습니다. 오늘 기록하면 " +
+      (streak + 1) + "일 연속이 됩니다.";
+  } else {
+    streakMessage.textContent = "오늘 칸을 채우면 연속 기록이 다시 시작됩니다.";
+  }
+  streakMessage.classList.toggle("is-waiting", !todayFilled);
+}
+
+/* ---------- 최근 7일 칸 ----------
+   상태(기록 여부·오늘·선택·검색 결과)를 클래스로 붙이고,
+   보이는 모양은 CSS 가 담당합니다. */
+function renderWeek() {
+  weekCells.innerHTML = "";
+  weekCells.classList.toggle("is-searching", searchKeyword !== "");
+
+  for (let offset = 6; offset >= 0; offset--) {
+    const date = daysAgo(offset);
+    const dayList = getRecordsOn(date);
+    const filled = dayList.length > 0;
+    const matched = searchKeyword !== "" && dayList.some(function (record) {
+      return matchesKeyword(record, searchKeyword);
+    });
+
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "week-cell";
+    cell.classList.toggle("is-filled", filled);
+    cell.classList.toggle("is-today", offset === 0);
+    cell.classList.toggle("is-match", matched);
+    cell.classList.toggle("is-selected", offset === selectedOffset);
+    cell.classList.toggle("just-filled", offset === 0 && justFilled);
+    cell.setAttribute("aria-pressed", String(offset === selectedOffset));
+    cell.setAttribute("aria-label",
+      formatDay(date) + (offset === 0 ? " 오늘" : "") + ", " +
+      (filled ? "기록 " + dayList.length + "개" : "기록 없음") +
+      (matched ? ", 찾은 과목 있음" : ""));
+
+    cell.innerHTML =
+      '<span class="cell-day">' + (offset === 0 ? "오늘" : dayNames[date.getDay()]) + "</span>" +
+      '<span class="cell-date">' + date.getDate() + "</span>" +
+      '<span class="cell-count">' + (filled ? dayList.length + "개" : "빈 칸") + "</span>";
+
+    cell.addEventListener("click", function () {
+      selectDay(offset);
+    });
+
+    const item = document.createElement("li");
+    item.appendChild(cell);
+    weekCells.appendChild(item);
+  }
+
+  justFilled = false;
+}
+
+/* ---------- 선택한 날짜의 기록 ----------
+   기록이 있으면 목록과 지우기 버튼을, 없으면 결과 없음 안내를 보여 줍니다. */
+function renderDetail() {
+  if (selectedOffset === null) {
+    dayDetail.hidden = true;
+    return;
+  }
+
+  const date = daysAgo(selectedOffset);
+  const dayList = getRecordsOn(date);
+
+  dayDetail.hidden = false;
+  dayDetailTitle.textContent =
+    formatDay(date) + (selectedOffset === 0 ? " · 오늘" : "") + " 기록";
+
+  dayRecords.innerHTML = "";
+  dayList.forEach(function (record) {
+    const item = document.createElement("li");
+
+    // 사용자가 입력한 과목명이 들어가므로 innerHTML 이 아니라 textContent 로 넣습니다.
+    const text = document.createElement("span");
+    text.textContent = describeRecord(record);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "secondary-button";
+    removeButton.textContent = "지우기";
+    removeButton.setAttribute("aria-label", record.subject + " 기록 지우기");
+    removeButton.addEventListener("click", function () {
+      askDelete(record.id);
+    });
+
+    item.append(text, removeButton);
+    dayRecords.appendChild(item);
+  });
+
+  dayRecords.hidden = dayList.length === 0;
+  dayEmpty.hidden = dayList.length > 0;
+  dayEmpty.textContent = selectedOffset === 0
+    ? "오늘은 아직 기록이 없습니다. 아래 [새 기록 더하기]로 오늘 칸을 채워 보세요."
+    : "이 날은 기록이 없습니다. 하루 빠져도 지금까지 채운 칸은 그대로 남습니다.";
+
+  // 지우기 확인 중인 기록이 있을 때만 확인 상자를 보여 줍니다.
+  const pending = records.find(function (record) {
+    return record.id === pendingDeleteId;
+  });
+  deleteConfirm.hidden = !pending;
+  if (pending) {
+    deleteConfirmText.textContent = "'" + describeRecord(pending) +
+      "' 기록을 지울까요? 지우면 칸과 연속 일수가 다시 계산됩니다.";
+  }
+}
+
+function renderBoard() {
+  renderStreak();
+  renderWeek();
+  renderDetail();
+}
+
+// 칸을 다시 그리면 포커스가 사라지므로, 선택한 칸으로 되돌립니다.
+function focusSelectedCell() {
+  if (selectedOffset !== null) {
+    weekCells.querySelectorAll(".week-cell")[6 - selectedOffset].focus();
+  }
+}
+
+/* ---------- 진입: 7주차 완료 화면에서 이어집니다 ---------- */
+document.querySelector("#openWeekButton").addEventListener("click", function () {
+  weekBoard.hidden = false;
+  selectedOffset = 0;
+  pendingDeleteId = null;
+  boardMessage.textContent = "";
+  justFilled = true;
+  renderBoard();
+  weekBoardTitle.focus();
 });
+
+/* ---------- 칸 선택 ----------
+   다른 날을 열면 진행 중이던 지우기 확인은 닫습니다.
+   검색어는 그대로 두어 찾은 칸을 차례로 열어 볼 수 있게 합니다. */
+function selectDay(offset) {
+  selectedOffset = offset;
+  pendingDeleteId = null;
+  boardMessage.textContent = "";
+  renderBoard();
+  focusSelectedCell();
+}
+
+/* ---------- 과목으로 찾기 ----------
+   빈 값 → 오류 안내, 일치 없음 → 결과 없음 안내, 일치 → 칸 강조와 합계 */
+function applySearch(keyword) {
+  searchMessage.className = "";
+  searchInput.classList.remove("has-error");
+
+  if (keyword === "") {
+    searchKeyword = "";
+    searchMessage.textContent = "찾을 과목 이름을 입력해 주세요. 예: 자료구조";
+    searchMessage.classList.add("is-error");
+    searchInput.classList.add("has-error");
+    searchClear.hidden = true;
+    searchInput.focus();
+    renderWeek();
+    return;
+  }
+
+  const matched = records.filter(function (record) {
+    return matchesKeyword(record, keyword);
+  });
+  searchClear.hidden = false;
+
+  if (matched.length === 0) {
+    searchKeyword = "";
+    searchMessage.textContent = "'" + keyword +
+      "' 기록이 이번 주에 없습니다. 과목 이름을 확인하거나 [검색 지우기]로 전체 칸을 다시 보세요.";
+    searchMessage.classList.add("is-empty");
+    renderWeek();
+    return;
+  }
+
+  const total = matched.reduce(function (sum, record) {
+    return sum + record.minutes;
+  }, 0);
+
+  searchKeyword = keyword;
+  searchMessage.textContent = "'" + keyword + "' 기록 " + matched.length +
+    "개 · 총 " + total + "분. 강조된 칸을 눌러 자세히 보세요.";
+  searchMessage.classList.add("is-found");
+  renderWeek();
+}
+
+// submit 의 기본 동작(새로고침)을 막고 검색만 실행합니다. Enter 로도 찾을 수 있습니다.
+searchForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+  applySearch(searchInput.value.trim());
+});
+
+// 다시 입력하기 시작하면 오류 표시를 지웁니다.
+searchInput.addEventListener("input", function () {
+  if (searchMessage.classList.contains("is-error")) {
+    searchMessage.textContent = "";
+    searchMessage.className = "";
+    searchInput.classList.remove("has-error");
+  }
+});
+
+searchClear.addEventListener("click", function () {
+  searchInput.value = "";
+  searchKeyword = "";
+  searchMessage.textContent = "";
+  searchMessage.className = "";
+  searchClear.hidden = true;
+  renderWeek();
+  searchInput.focus();
+});
+
+/* ---------- 기록 지우기: 확인 → 지우기 / 취소 ----------
+   바로 지우지 않고 한 번 더 묻습니다. 기본 포커스는 안전한 [취소]에 둡니다. */
+function askDelete(recordId) {
+  pendingDeleteId = recordId;
+  boardMessage.textContent = "";
+  renderDetail();
+  document.querySelector("#deleteNo").focus();
+}
+
+document.querySelector("#deleteNo").addEventListener("click", function () {
+  pendingDeleteId = null;
+  boardMessage.textContent = "지우기를 취소했습니다. 기록은 그대로 남아 있습니다.";
+  renderDetail();
+  focusSelectedCell();
+});
+
+document.querySelector("#deleteYes").addEventListener("click", function () {
+  records = records.filter(function (record) {
+    return record.id !== pendingDeleteId;
+  });
+  pendingDeleteId = null;
+
+  // 검색 중이었다면 남은 기록으로 결과를 다시 계산합니다.
+  if (searchKeyword !== "") {
+    applySearch(searchKeyword);
+  }
+
+  renderBoard();
+  boardMessage.textContent = "기록을 지웠습니다. 칸과 연속 일수를 다시 계산했습니다.";
+  focusSelectedCell();
+});
+
+/* ---------- 새 기록 더하기: 7주차 흐름을 처음 상태로 다시 엽니다 ---------- */
+document.querySelector("#addRecordButton").addEventListener("click", resetRecordFlow);
