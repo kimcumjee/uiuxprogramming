@@ -17,21 +17,36 @@
   과목으로 찾거나 잘못 남긴 기록을 지운다.
   9주차 보완: 기록 입력을 하나의 form 으로 묶고, 레이블·안내·오류를 입력칸에 연결한다.
   공부 방식은 선택했을 때만 열리고 제출되며, 저장 중·완료·실패 결과를 문장으로 알린다.
+  10주차 보완: 서비스 소개 · 오늘 기록 · 이번 주 기록 세 메뉴로 목적지를 찾고 현재 위치를 확인한다.
+  저장된 기록은 집중도로 걸러 보고, 600px 이하에서는 메뉴 버튼으로 같은 경로를 연다.
   -->
 
-  <header>
+  <!-- 10주차: 사용자가 이해 → 기록 → 결과 확인 순서로 찾는 세 영역만 메뉴에 둡니다.
+       스크롤해도 상단에 남아 현재 위치를 계속 볼 수 있습니다. -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#about">하루한칸</a>
+
+      <button id="menu-toggle" class="menu-toggle" type="button"
+        aria-controls="main-nav" aria-expanded="false">
+        메뉴 열기
+      </button>
+
+      <nav id="main-nav" class="main-nav" aria-label="주요 메뉴">
+        <ul>
+          <li><a href="#about">서비스 소개</a></li>
+          <li><a href="#recordFlow">오늘 기록</a></li>
+          <li><a href="#weekBoard">이번 주 기록</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
     <p class="eyebrow">STUDY HABIT TRACKER</p>
     <h1>하루한칸</h1>
     <p class="header-description">하루 10분, 오늘 공부한 것을 한 칸씩 채워 학습 습관이 끊기지 않게 합니다.</p>
-
-    <nav aria-label="주요 메뉴">
-      <a href="#about">서비스 소개</a>
-      <a href="#features">서비스 정보</a>
-      <a href="#notify">알림 설정</a>
-      <a href="#interaction-practice">이용 설정</a>
-      <a href="#subscribe">소식 받기</a>
-    </nav>
-  </header>
+  </div>
 
   <main>
     <section id="about" class="content-section">
@@ -167,11 +182,18 @@
 
     <!-- 오늘 기록 남기기 흐름 (이용 설정의 동의를 마친 뒤에만 열립니다)
          9주차: 세 단계를 하나의 form 으로 묶어, 버튼과 Enter 가 같은 submit 검증을 거칩니다. -->
-    <section id="recordFlow" class="content-section" hidden>
+    <!-- 10주차: 메뉴의 목적지이므로 영역은 항상 보이고, 안내 확인 전에는 입력 대신 시작 조건을 보여 줍니다. -->
+    <section id="recordFlow" class="content-section">
       <h2>오늘 기록 남기기</h2>
-      <p id="recordProgress" aria-live="polite">1 / 3 · 과목과 시간</p>
 
-      <form id="recordForm" novalidate aria-busy="false">
+      <div id="recordGate" class="record-gate">
+        <p>기록은 내 기기에만 저장됩니다. 이용 설정에서 이 안내를 확인하면 오늘 기록을 시작할 수 있습니다.</p>
+        <a id="recordGateLink" class="secondary-button" href="#interaction-practice">안내 확인하러 가기</a>
+      </div>
+
+      <p id="recordProgress" aria-live="polite" hidden>1 / 3 · 과목과 시간</p>
+
+      <form id="recordForm" novalidate aria-busy="false" hidden>
         <section class="record-step" data-step="1">
           <h3>무엇을 공부했나요</h3>
 
@@ -303,7 +325,7 @@
     </section>
 
     <!-- 중간고사 · 이번 주 기록 보기 (기록 완료 화면의 [이번 주 기록 보기]로 열립니다) -->
-    <section id="weekBoard" class="content-section" hidden>
+    <section id="weekBoard" class="content-section">
       <h2 id="weekBoardTitle" tabindex="-1">이번 주 기록</h2>
       <p id="streakMessage" aria-live="polite"></p>
 
@@ -335,6 +357,35 @@
         </div>
 
         <p id="boardMessage" aria-live="polite"></p>
+      </div>
+
+      <!-- 10주차 · 저장된 기록을 조건(집중도)에 따라 모아 봅니다. -->
+      <div class="record-archive">
+        <div class="archive-heading">
+          <h3>기록 모아 보기</h3>
+          <p>최근 7일 기록을 최근 순서로 보여 줍니다. 집중도를 골라 범위를 좁힐 수 있습니다.
+            <span class="archive-count">표시 중 <strong id="recordCount" aria-label="현재 표시 중인 기록 0개">0</strong>개</span>
+          </p>
+        </div>
+
+        <div class="record-filters" role="group" aria-label="기록 표시 범위">
+          <button class="filter-button is-active"
+            type="button" data-filter="all" aria-pressed="true">전체</button>
+          <button class="filter-button"
+            type="button" data-filter="좋음" aria-pressed="false">집중 좋음</button>
+          <button class="filter-button"
+            type="button" data-filter="보통" aria-pressed="false">보통</button>
+          <button class="filter-button"
+            type="button" data-filter="아쉬움" aria-pressed="false">아쉬움</button>
+        </div>
+
+        <ul id="recordList" class="record-list"></ul>
+
+        <div id="recordEmpty" class="record-empty" hidden>
+          <h4></h4>
+          <p></p>
+          <a class="secondary-button" href="#recordFlow">오늘 기록하러 가기</a>
+        </div>
       </div>
 
       <button id="addRecordButton" class="secondary-button" type="button">
