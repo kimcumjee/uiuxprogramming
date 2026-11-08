@@ -150,6 +150,75 @@ tabs.forEach(function (tab) {
 
 
 /* ===================================================================
+   10주차 · 내비게이션과 현재 위치
+   메뉴: 서비스 소개(#about) → 오늘 기록(#recordFlow) → 이번 주 기록(#weekBoard)
+   =================================================================== */
+
+const navLinks = document.querySelectorAll(".main-nav a");
+const menuToggle = document.querySelector("#menu-toggle");
+const mainNav = document.querySelector("#main-nav");
+
+// 주소의 # 값과 같은 메뉴 하나에만 강조와 aria-current 를 남깁니다.
+// # 이 없으면 첫 메뉴(서비스 소개)를 현재 위치로 봅니다.
+function updateCurrentNav() {
+  const currentHash = window.location.hash;
+
+  navLinks.forEach(function (link) {
+    const current = currentHash
+      ? link.getAttribute("href") === currentHash
+      : link === navLinks[0];
+
+    link.classList.toggle("is-current", current);
+
+    if (current) {
+      link.setAttribute("aria-current", "page");
+    } else {
+      link.removeAttribute("aria-current");
+    }
+  });
+}
+
+window.addEventListener("hashchange", updateCurrentNav);
+updateCurrentNav();
+
+// 버튼으로 영역을 옮길 때도 메뉴와 같은 주소를 쓰게 합니다.
+// 이미 같은 주소면 hashchange 가 생기지 않으므로 직접 스크롤합니다.
+function goTo(hash) {
+  if (window.location.hash === hash) {
+    document.querySelector(hash).scrollIntoView();
+  } else {
+    window.location.hash = hash;
+  }
+}
+
+/* ---------- 모바일 메뉴: 메뉴·버튼 문구·aria-expanded 를 같은 값으로 ---------- */
+function setMenuOpen(isOpen) {
+  mainNav.classList.toggle("is-open", isOpen);
+  menuToggle.textContent = isOpen ? "메뉴 닫기" : "메뉴 열기";
+  menuToggle.setAttribute("aria-expanded", String(isOpen));
+}
+
+menuToggle.addEventListener("click", function () {
+  setMenuOpen(!mainNav.classList.contains("is-open"));
+});
+
+// 목적지를 고르면 메뉴를 닫습니다.
+navLinks.forEach(function (link) {
+  link.addEventListener("click", function () {
+    setMenuOpen(false);
+  });
+});
+
+// 열린 메뉴는 Esc 로도 닫고, 초점을 메뉴 버튼으로 돌려줍니다.
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape" && mainNav.classList.contains("is-open")) {
+    setMenuOpen(false);
+    menuToggle.focus();
+  }
+});
+
+
+/* ===================================================================
    7주차 · 사용자 흐름과 인터랙션 시나리오
    과업: 오늘 공부한 내용을 기록해 달력의 한 칸을 채운다.
    완료 조건: 확인 화면에서 내용을 검토하고 완료 화면에 도달한다.
@@ -157,6 +226,8 @@ tabs.forEach(function (tab) {
 
 const recordFlow = document.querySelector("#recordFlow");
 const recordForm = document.querySelector("#recordForm");
+const recordGate = document.querySelector("#recordGate");
+const recordGateLink = document.querySelector("#recordGateLink");
 const recordSteps = document.querySelectorAll(".record-step");
 const recordProgress = document.querySelector("#recordProgress");
 const recordSubject = document.querySelector("#recordSubject");
@@ -341,8 +412,16 @@ recordMinutes.addEventListener("input", function () {
 /* ---------- 진입: 6주차의 동의 조건을 유지한 채 흐름을 엽니다 ----------
    startButton 은 agreeCheck 를 선택해야 눌리므로,
    안내를 확인한 사용자만 이 흐름에 들어옵니다. */
+// 10주차: 영역은 항상 보이므로, 시작하면 안내 대신 입력 form 을 엽니다.
+function openRecordForm() {
+  recordGate.hidden = true;
+  recordProgress.hidden = false;
+  recordForm.hidden = false;
+}
+
 startButton.addEventListener("click", function () {
-  recordFlow.hidden = false;
+  openRecordForm();
+  goTo("#recordFlow");
   showRecordStep(1);
 });
 
@@ -479,7 +558,7 @@ function resetRecordFlow() {
   recordDone.textContent = "";
   setSubmitState(false, "");
 
-  recordFlow.hidden = false;
+  openRecordForm();
   showRecordStep(1);
   recordSubject.focus();
 }
@@ -579,14 +658,12 @@ function saveTodayRecord(record) {
   });
   nextRecordId = nextRecordId + 1;
 
-  // 기록 보드가 이미 열려 있으면 오늘 칸을 바로 갱신합니다.
-  if (!weekBoard.hidden) {
-    selectedOffset = 0;
-    pendingDeleteId = null;
-    boardMessage.textContent = "";
-    justFilled = true;
-    renderBoard();
-  }
+  // 10주차: 기록 보드는 항상 보이므로 오늘 칸과 기록 목록을 바로 갱신합니다.
+  selectedOffset = 0;
+  pendingDeleteId = null;
+  boardMessage.textContent = "";
+  justFilled = true;
+  renderBoard();
 }
 
 /* ---------- 연속 일수 ----------
@@ -716,6 +793,7 @@ function renderBoard() {
   renderStreak();
   renderWeek();
   renderDetail();
+  renderRecordList();
 }
 
 // 칸을 다시 그리면 포커스가 사라지므로, 선택한 칸으로 되돌립니다.
@@ -727,7 +805,8 @@ function focusSelectedCell() {
 
 /* ---------- 진입: 7주차 완료 화면에서 이어집니다 ---------- */
 document.querySelector("#openWeekButton").addEventListener("click", function () {
-  weekBoard.hidden = false;
+  // 10주차: 메뉴와 같은 주소(#weekBoard)로 이동해 현재 메뉴 표시도 함께 바뀝니다.
+  goTo("#weekBoard");
   selectedOffset = 0;
   pendingDeleteId = null;
   boardMessage.textContent = "";
@@ -846,5 +925,116 @@ document.querySelector("#deleteYes").addEventListener("click", function () {
   focusSelectedCell();
 });
 
-/* ---------- 새 기록 더하기: 7주차 흐름을 처음 상태로 다시 엽니다 ---------- */
-document.querySelector("#addRecordButton").addEventListener("click", resetRecordFlow);
+/* ---------- 새 기록 더하기: 7주차 흐름을 처음 상태로 다시 엽니다 ----------
+   10주차: 이번 주 기록이 항상 보이므로, 안내를 확인하지 않은 사용자는 시작 조건으로 안내합니다. */
+document.querySelector("#addRecordButton").addEventListener("click", function () {
+  goTo("#recordFlow");
+
+  if (!agreeCheck.checked) {
+    recordGateLink.focus();
+    return;
+  }
+
+  resetRecordFlow();
+});
+
+
+/* ===================================================================
+   10주차 · 기록 모아 보기 (집중도 필터)
+   저장된 기록에서 구분할 수 있는 상태 = 집중도(좋음 / 보통 / 아쉬움)
+   =================================================================== */
+
+const filterButtons = document.querySelectorAll(".filter-button");
+const recordList = document.querySelector("#recordList");
+const recordEmpty = document.querySelector("#recordEmpty");
+const recordCount = document.querySelector("#recordCount");
+let currentFilter = "all";
+
+function getVisibleRecords() {
+  return records
+    .filter(function (record) {
+      return currentFilter === "all" || record.focus === currentFilter;
+    })
+    .sort(function (a, b) {
+      // 최근 날짜가 위로, 같은 날은 나중에 남긴 기록이 위로
+      return a.date === b.date ? b.id - a.id : (a.date < b.date ? 1 : -1);
+    });
+}
+
+// "2026-10-22" 같은 기록 날짜가 오늘에서 며칠 전인지 찾습니다.
+function offsetOf(dateKey) {
+  for (let offset = 0; offset <= 6; offset++) {
+    if (toDateKey(daysAgo(offset)) === dateKey) return offset;
+  }
+  return null;
+}
+
+function renderRecordList() {
+  const visibleRecords = getVisibleRecords();
+
+  recordList.replaceChildren();
+  recordEmpty.hidden = visibleRecords.length !== 0;
+  recordList.hidden = visibleRecords.length === 0;
+
+  const emptyTitle = recordEmpty.querySelector("h4");
+  const emptyDescription = recordEmpty.querySelector("p");
+  const emptyAction = recordEmpty.querySelector("a");
+
+  if (visibleRecords.length === 0) {
+    const filtered = currentFilter !== "all";
+    emptyTitle.textContent = filtered
+      ? "집중도 '" + currentFilter + "' 기록이 이번 주에 없어요."
+      : "아직 남긴 기록이 없어요.";
+    emptyDescription.textContent = filtered
+      ? "다른 집중도를 선택하거나 [전체]를 눌러 모든 기록을 보세요."
+      : "오늘 공부한 것을 기록하면 이곳에 한 줄씩 모입니다.";
+    emptyAction.hidden = filtered;
+  }
+
+  recordCount.textContent = String(visibleRecords.length);
+  recordCount.setAttribute("aria-label", "현재 표시 중인 기록 " + visibleRecords.length + "개");
+
+  visibleRecords.forEach(function (record) {
+    const offset = offsetOf(record.date);
+    const date = daysAgo(offset);
+
+    // 누르면 그날 칸을 열어 자세한 기록과 지우기를 볼 수 있습니다.
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "record-item";
+
+    const day = document.createElement("span");
+    day.className = "record-item-day";
+    day.textContent = offset === 0 ? "오늘" : formatDay(date);
+
+    const text = document.createElement("span");
+    text.textContent = describeRecord(record);   // 사용자가 입력한 과목명이므로 textContent
+
+    button.append(day, text);
+    button.setAttribute("aria-label", formatDay(date) + " " + describeRecord(record) + ", 이 날 칸 열기");
+    button.addEventListener("click", function () {
+      selectDay(offset);
+    });
+
+    const item = document.createElement("li");
+    item.appendChild(button);
+    recordList.appendChild(item);
+  });
+}
+
+filterButtons.forEach(function (button) {
+  button.addEventListener("click", function () {
+    currentFilter = button.dataset.filter;
+
+    filterButtons.forEach(function (item) {
+      const selected = item === button;
+      item.classList.toggle("is-active", selected);
+      item.setAttribute("aria-pressed", String(selected));
+    });
+
+    renderRecordList();
+  });
+});
+
+// 이번 주 기록은 처음부터 보이므로 페이지를 열 때 한 번 그립니다.
+renderBoard();
