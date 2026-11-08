@@ -156,20 +156,50 @@ tabs.forEach(function (tab) {
    =================================================================== */
 
 const recordFlow = document.querySelector("#recordFlow");
+const recordForm = document.querySelector("#recordForm");
 const recordSteps = document.querySelectorAll(".record-step");
 const recordProgress = document.querySelector("#recordProgress");
 const recordSubject = document.querySelector("#recordSubject");
 const recordMinutes = document.querySelector("#recordMinutes");
 const recordFocus = document.querySelector("#recordFocus");
-const recordError = document.querySelector("#recordError");
 const focusHelp = document.querySelector("#focusHelp");
 const recordSummary = document.querySelector("#recordSummary");
 const recordDone = document.querySelector("#recordDone");
 
+// 9주차 · 입력칸마다 필드 묶음·안내·글자 수·오류 문장을 따로 둡니다.
+const subjectField = document.querySelector("#subject-field");
+const subjectHelp = document.querySelector("#subject-help");
+const subjectCount = document.querySelector("#subject-count");
+const subjectError = document.querySelector("#subject-error");
+const minutesField = document.querySelector("#minutes-field");
+const minutesHelp = document.querySelector("#minutes-help");
+const minutesError = document.querySelector("#minutes-error");
+
+// 9주차 · 조건부 입력 (공부 방식)
+const methodOption = document.querySelector("#methodOption");
+const methodOptions = document.querySelector("#methodOptions");
+const methodInputs = [...document.querySelectorAll('input[name="method"]')];
+
+// 9주차 · 제출 상태. 알림 설정의 saveButton 과 이름이 겹치지 않게 record 를 붙였습니다.
+const recordSaveButton = document.querySelector("#recordComplete");
+const recordBack3 = document.querySelector("#recordBack3");
+const submitStatus = document.querySelector("#submit-status");
+// 주소에 ?save-error=1 을 붙이면 저장 실패 경로를 확인할 수 있습니다.
+const forceSaveFailure = new URLSearchParams(location.search).has("save-error");
+
+const SUBJECT_HELP = "달력에서 알아볼 수 있도록 과목 이름을 2자 이상 입력해 주세요.";
+const MINUTES_HELP = "1분부터 1440분(24시간)까지 숫자로 입력합니다. 10분 단위면 충분합니다.";
+const SAVE_LABEL = "오늘 칸 채우기";
+
 const stepNames = ["과목과 시간", "집중도 선택", "내용 확인"];
+let currentStep = 1;
+let isSaving = false;
 
 // 현재 단계만 보여 주고, 지금 어디인지 진행 표시에 적습니다.
+// 9주차: 단계가 바뀌면 새 단계 제목으로 초점을 옮겨 현재 위치를 알려 줍니다.
 function showRecordStep(step) {
+  currentStep = step;
+
   recordSteps.forEach(function (item) {
     item.hidden = Number(item.dataset.step) !== step;
   });
@@ -177,14 +207,136 @@ function showRecordStep(step) {
   recordProgress.textContent = step <= 3
     ? step + " / 3 · " + stepNames[step - 1]
     : "기록 완료";
+
+  const heading = recordSteps[step - 1].querySelector("h3");
+  heading.tabIndex = -1;
+  heading.focus();
 }
 
-// 오류 표시를 지웁니다.
-function clearRecordError() {
-  recordError.textContent = "";
-  recordSubject.classList.remove("has-error");
-  recordMinutes.classList.remove("has-error");
+/* ---------- 9주차 · 조건부 입력을 한 함수에서 갱신 ----------
+   hidden 으로 화면에서 숨기고, disabled 로 Tab 이동과 제출 데이터에서도 뺍니다. */
+function syncMethodFields() {
+  const open = methodOption.checked;
+  methodOption.setAttribute("aria-expanded", String(open));
+  methodOptions.hidden = !open;
+  methodInputs.forEach(function (input) {
+    input.disabled = !open;
+  });
 }
+
+methodOption.addEventListener("change", syncMethodFields);
+syncMethodFields();
+
+/* ---------- 9주차 · 입력 중 상태 ----------
+   작성하는 동안에는 빨간 오류를 띄우지 않고, 글자 수와 조건 충족 여부만 알려 줍니다. */
+function isInvalid(input) {
+  return input.getAttribute("aria-invalid") === "true";
+}
+
+function updateSubjectExperience() {
+  const length = recordSubject.value.length;
+  const enough = recordSubject.value.trim().length >= 2;
+
+  subjectCount.textContent = length + " / 20자";
+  subjectField.classList.toggle("is-valid", enough && !isInvalid(recordSubject));
+
+  if (!isInvalid(recordSubject)) {
+    subjectHelp.textContent = enough ? "입력 조건을 충족했습니다." : SUBJECT_HELP;
+  }
+}
+
+function getMinutesProblem() {
+  const raw = recordMinutes.value;
+  const minutes = Number(raw);
+
+  if (raw === "") return "공부한 시간을 입력해 주세요. 예: 90";
+  if (!Number.isInteger(minutes)) return "시간은 분 단위 정수로 입력해 주세요. 예: 1시간 30분이면 90";
+  if (minutes < 1) return "공부한 시간을 1분 이상으로 입력해 주세요. 예: 10";
+  if (minutes > 1440) return "하루는 1440분입니다. 1440분 이하로 입력해 주세요.";
+  return "";
+}
+
+function updateMinutesExperience() {
+  const ok = getMinutesProblem() === "";
+  minutesField.classList.toggle("is-valid", ok && !isInvalid(recordMinutes));
+
+  if (!isInvalid(recordMinutes)) {
+    minutesHelp.textContent = ok
+      ? "입력 조건을 충족했습니다. " + Number(recordMinutes.value) + "분으로 기록합니다."
+      : MINUTES_HELP;
+  }
+}
+
+/* ---------- 9주차 · 오류 표시와 해제를 같은 규칙으로 ----------
+   aria-invalid, .has-error, 오류 문장을 항상 함께 켜고 함께 끕니다. */
+function showFieldError(input, field, errorEl, message) {
+  input.setAttribute("aria-invalid", "true");
+  errorEl.textContent = message;
+  field.classList.remove("is-valid");
+  field.classList.add("has-error");
+  return false;
+}
+
+function clearFieldError(input, field, errorEl) {
+  input.removeAttribute("aria-invalid");
+  errorEl.textContent = "";
+  field.classList.remove("has-error");
+}
+
+// 빈 값과 글자 수 부족은 원인이 다르므로 문장도 다르게 씁니다.
+function validateSubject() {
+  const subject = recordSubject.value.trim();
+
+  if (!subject) {
+    return showFieldError(recordSubject, subjectField, subjectError,
+      "공부한 과목을 입력해 주세요. 예: 자료구조");
+  }
+
+  if (subject.length < 2) {
+    return showFieldError(recordSubject, subjectField, subjectError,
+      "과목 이름을 2자 이상 입력해 주세요. 예: 영어, 회계원리");
+  }
+
+  clearFieldError(recordSubject, subjectField, subjectError);
+  updateSubjectExperience();
+  return true;
+}
+
+function validateMinutes() {
+  const problem = getMinutesProblem();
+
+  if (problem) {
+    return showFieldError(recordMinutes, minutesField, minutesError, problem);
+  }
+
+  clearFieldError(recordMinutes, minutesField, minutesError);
+  updateMinutesExperience();
+  return true;
+}
+
+// 두 칸을 모두 검사해 오류를 한 번에 보여 주고, 첫 오류 칸으로 초점을 옮깁니다.
+function validateStep1() {
+  const subjectOk = validateSubject();
+  const minutesOk = validateMinutes();
+  return subjectOk && minutesOk;
+}
+
+function focusFirstError() {
+  window.requestAnimationFrame(function () {
+    recordForm.querySelector('[aria-invalid="true"]')?.focus();
+  });
+}
+
+// 오류가 확인된 칸은 고치는 즉시 다시 검사해 결과를 반영합니다.
+recordSubject.addEventListener("input", function () {
+  updateSubjectExperience();
+  if (isInvalid(recordSubject)) validateSubject();
+});
+
+recordMinutes.addEventListener("input", function () {
+  updateMinutesExperience();
+  if (isInvalid(recordMinutes)) validateMinutes();
+});
 
 /* ---------- 진입: 6주차의 동의 조건을 유지한 채 흐름을 엽니다 ----------
    startButton 은 agreeCheck 를 선택해야 눌리므로,
@@ -192,31 +344,16 @@ function clearRecordError() {
 startButton.addEventListener("click", function () {
   recordFlow.hidden = false;
   showRecordStep(1);
-  recordSubject.focus();
 });
 
 /* ---------- 1단계: 필수값 검사 ----------
-   비어 있으면 다음으로 넘기지 않고 같은 단계에 머뭅니다.
-   무엇이 잘못됐는지와 어떻게 고칠지를 함께 알립니다. */
+   비어 있으면 다음으로 넘기지 않고 같은 단계에 머뭅니다. */
 document.querySelector("#recordNext1").addEventListener("click", function () {
-  const subject = recordSubject.value.trim();
-  const minutes = Number(recordMinutes.value);
-
-  const missingSubject = subject === "";
-  const invalidMinutes = recordMinutes.value === "" || minutes < 1;
-
-  if (missingSubject || invalidMinutes) {
-    recordError.textContent = missingSubject
-      ? "공부한 과목을 입력해 주세요. 예: 자료구조"
-      : "공부한 시간을 1분 이상 숫자로 입력해 주세요. 예: 90";
-
-    recordSubject.classList.toggle("has-error", missingSubject);
-    recordMinutes.classList.toggle("has-error", !missingSubject && invalidMinutes);
-    (missingSubject ? recordSubject : recordMinutes).focus();
+  if (!validateStep1()) {
+    focusFirstError();
     return;
   }
 
-  clearRecordError();
   showRecordStep(2);
 });
 
@@ -228,41 +365,121 @@ recordFocus.addEventListener("change", function () {
 // 이전으로 돌아가도 입력한 값은 지우지 않습니다.
 document.querySelector("#recordBack2").addEventListener("click", function () {
   showRecordStep(1);
-  recordSubject.focus();
 });
 
-/* ---------- 3단계: 입력한 값을 확인 화면에 반영 ---------- */
+/* ---------- 3단계: 제출될 값을 확인 화면에 반영 ----------
+   FormData 로 읽으므로 닫혀서 disabled 된 공부 방식은 요약에도 들어가지 않습니다. */
+function readRecordForm() {
+  const data = new FormData(recordForm);
+  return {
+    subject: String(data.get("subject") || "").trim(),
+    minutes: Number(data.get("minutes")),
+    focus: String(data.get("focus") || "좋음"),
+    method: data.get("withMethod") === "included" ? String(data.get("method") || "") : ""
+  };
+}
+
 document.querySelector("#recordNext2").addEventListener("click", function () {
-  recordSummary.textContent =
-    recordSubject.value.trim() + " · " +
-    Number(recordMinutes.value) + "분 · 집중도 " +
-    recordFocus.value;
+  recordSummary.textContent = describeRecord(readRecordForm());
+  submitStatus.textContent = "";
   showRecordStep(3);
 });
 
-document.querySelector("#recordBack3").addEventListener("click", function () {
+recordBack3.addEventListener("click", function () {
   showRecordStep(2);
 });
 
-/* ---------- 완료 ---------- */
-document.querySelector("#recordComplete").addEventListener("click", function () {
-  // 중간고사: 완료한 기록을 오늘 칸에 저장해 이번 주 기록에 반영합니다.
-  saveTodayRecord();
-  recordDone.textContent =
-    recordSummary.textContent + " 기록을 저장했습니다.";
-  showRecordStep(4);
+/* ---------- 9주차 · 저장 상태 ----------
+   저장하는 동안에는 버튼을 잠가 중복 제출을 막고 처리 중임을 알립니다. */
+function setSubmitState(loading, message) {
+  isSaving = loading;
+  recordForm.setAttribute("aria-busy", String(loading));
+  recordSaveButton.disabled = loading;
+  recordBack3.disabled = loading;
+  recordSaveButton.textContent = loading ? "칸을 채우는 중…" : SAVE_LABEL;
+  submitStatus.textContent = message;
+  submitStatus.classList.toggle("is-failed", !loading && message.startsWith("저장하지 못했습니다"));
+}
+
+function wait(milliseconds) {
+  return new Promise(function (resolve) {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
+// 실제 서버 대신 0.6초 기다린 뒤 저장합니다. 실패 테스트 주소에서는 오류를 던집니다.
+async function persistRecord(record) {
+  await wait(600);
+
+  if (forceSaveFailure) {
+    throw new Error("수업용 저장 실패");
+  }
+
+  saveTodayRecord(record);
+}
+
+/* ---------- 9주차 · submit 하나로 단계 이동과 저장을 통합 ----------
+   [오늘 칸 채우기] 버튼과 입력칸에서 누른 Enter 가 모두 이 흐름을 거칩니다. */
+recordForm.addEventListener("submit", async function (event) {
+  event.preventDefault();
+
+  if (isSaving) return;
+
+  if (currentStep === 1) {
+    document.querySelector("#recordNext1").click();
+    return;
+  }
+
+  if (currentStep === 2) {
+    document.querySelector("#recordNext2").click();
+    return;
+  }
+
+  if (currentStep !== 3) return;
+
+  // 확인 단계에서도 전체 값을 다시 검사합니다. 오류가 있으면 1단계를 열고 첫 오류 칸으로 갑니다.
+  if (!validateStep1()) {
+    showRecordStep(1);
+    focusFirstError();
+    return;
+  }
+
+  const record = readRecordForm();
+  setSubmitState(true, "오늘 칸에 기록을 저장하고 있습니다.");
+
+  try {
+    await persistRecord(record);
+    setSubmitState(false, "오늘 칸을 채웠습니다.");
+    recordDone.textContent = describeRecord(record) +
+      " 기록을 저장했습니다. [이번 주 기록 보기]에서 채운 칸을 확인할 수 있습니다.";
+    showRecordStep(4);
+  } catch {
+    setSubmitState(false,
+      "저장하지 못했습니다. 입력한 내용은 그대로 두었습니다. [오늘 칸 채우기]를 다시 눌러 주세요.");
+    recordSaveButton.focus();
+  }
 });
 
-/* ---------- 다시 시작: 입력·오류·선택·진행 상태를 모두 초기화 ----------
+/* ---------- 다시 시작: 입력·오류·선택·진행·저장 상태를 모두 초기화 ----------
    이번 주 기록의 [새 기록 더하기]도 같은 함수로 흐름을 처음부터 엽니다. */
 function resetRecordFlow() {
-  recordSubject.value = "";
-  recordMinutes.value = "";
-  recordFocus.value = "좋음";
+  recordForm.reset();
+  syncMethodFields();
   focusHelp.hidden = true;
+
+  clearFieldError(recordSubject, subjectField, subjectError);
+  clearFieldError(recordMinutes, minutesField, minutesError);
+  subjectField.classList.remove("is-valid");
+  minutesField.classList.remove("is-valid");
+  subjectCount.textContent = "0 / 20자";
+  subjectHelp.textContent = SUBJECT_HELP;
+  minutesHelp.textContent = MINUTES_HELP;
+
   recordSummary.textContent = "";
   recordDone.textContent = "";
-  clearRecordError();
+  setSubmitState(false, "");
+
+  recordFlow.hidden = false;
   showRecordStep(1);
   recordSubject.focus();
 }
@@ -322,7 +539,7 @@ function formatDay(date) {
 let records = [
   { id: 1, date: toDateKey(daysAgo(6)), subject: "자료구조", minutes: 60, focus: "보통" },
   { id: 2, date: toDateKey(daysAgo(5)), subject: "영어 단어", minutes: 30, focus: "좋음" },
-  { id: 3, date: toDateKey(daysAgo(3)), subject: "자료구조", minutes: 90, focus: "좋음" },
+  { id: 3, date: toDateKey(daysAgo(3)), subject: "자료구조", minutes: 90, focus: "좋음", method: "문제 풀기" },
   { id: 4, date: toDateKey(daysAgo(2)), subject: "운영체제", minutes: 45, focus: "아쉬움" },
   { id: 5, date: toDateKey(daysAgo(1)), subject: "자료구조", minutes: 40, focus: "보통" },
   { id: 6, date: toDateKey(daysAgo(1)), subject: "영어 단어", minutes: 20, focus: "좋음" }
@@ -342,21 +559,23 @@ function getRecordsOn(date) {
 }
 
 function describeRecord(record) {
-  return record.subject + " · " + record.minutes + "분 · 집중도 " + record.focus;
+  return record.subject + " · " + record.minutes + "분 · 집중도 " + record.focus +
+    (record.method ? " · " + record.method : "");
 }
 
 function matchesKeyword(record, keyword) {
   return record.subject.toLowerCase().includes(keyword.toLowerCase());
 }
 
-// 7주차 완료 버튼에서 호출합니다.
-function saveTodayRecord() {
+// 9주차: 기록 form 의 submit 이 저장에 성공했을 때 호출합니다.
+function saveTodayRecord(record) {
   records.push({
     id: nextRecordId,
     date: toDateKey(daysAgo(0)),
-    subject: recordSubject.value.trim(),
-    minutes: Number(recordMinutes.value),
-    focus: recordFocus.value
+    subject: record.subject,
+    minutes: record.minutes,
+    focus: record.focus,
+    method: record.method
   });
   nextRecordId = nextRecordId + 1;
 
