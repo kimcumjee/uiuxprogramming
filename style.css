@@ -463,8 +463,20 @@ body.dark footer {
 
 .record-step[hidden],
 #recordFlow[hidden],
-#focusHelp[hidden] {
+#focusHelp[hidden],
+.method-options[hidden] {
   display: none;
+}
+
+/* 단계 제목은 스크립트로 초점을 옮기는 대상이라 테두리 대신 왼쪽 표시만 둡니다. */
+.record-step h3:focus {
+  outline: none;
+}
+
+.record-step h3:focus-visible {
+  outline: 3px solid #b6dcd3;
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .record-step label {
@@ -474,7 +486,9 @@ body.dark footer {
   font-weight: 700;
 }
 
-.record-step input,
+/* 체크박스와 라디오는 글자 크기 그대로 둡니다. 전체 폭으로 늘리지 않습니다.
+   :where() 로 감싸 우선순위를 올리지 않아야 아래 오류·조건 충족 테두리가 덮이지 않습니다. */
+.record-step input:where(:not([type="checkbox"], [type="radio"])),
 .record-step select {
   width: 100%;
   max-width: 100%;
@@ -485,34 +499,157 @@ body.dark footer {
   background-color: #ffffff;
 }
 
-.record-step input:focus,
+.record-step input:where(:not([type="checkbox"], [type="radio"])):focus,
 .record-step select:focus {
   border-color: #2f7d6f;
   outline: 3px solid #b6dcd3;
   outline-offset: 2px;
 }
 
-/* 오류는 무엇이 잘못됐는지와 어떻게 고칠지를 함께 알립니다. */
-#recordError {
-  margin-top: 12px;
-  margin-bottom: 0;
+/* ---------- 9주차 · 필드 묶음: 레이블 · 입력 · 안내 · 글자 수 · 오류 ---------- */
+.required {
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #236054;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: 1px;
+  background-color: #d8ece6;
+}
+
+.field-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.field-meta p {
+  margin: 6px 0 0;
+  color: #5e6272;
+  font-size: 13px;
+}
+
+#subject-count {
+  flex: none;
+}
+
+/* 오류 문장 자리를 미리 비워 두어 오류가 생기고 사라질 때 화면이 흔들리지 않습니다. */
+.field-error {
+  min-height: 24px;
+  margin: 6px 0 0;
   color: #9d2439;
+  font-size: 13px;
   font-weight: 700;
 }
 
-#recordError:empty {
-  display: none;
+/* 조건 충족: 초록 테두리 + 안내 문장 변경 (색과 문장을 함께 바꿉니다) */
+.field.is-valid input {
+  border-color: #16805d;
 }
 
-.record-step .has-error {
+.field.is-valid .field-meta p:first-child {
+  color: #116448;
+  font-weight: 700;
+}
+
+/* 오류: 빨간 테두리 + 오류 문장 */
+.field.has-error input {
   border-color: #9d2439;
 }
 
 /* 오류 칸에 포커스가 가도 오류 표시가 가려지지 않게 합니다. */
-.record-step input.has-error:focus,
-.record-step select.has-error:focus {
+.field.has-error input:focus {
   border-color: #9d2439;
   outline: 3px solid #e6b3bd;
+}
+
+/* ---------- 9주차 · 조건부 입력 (공부 방식) ---------- */
+.method-field {
+  margin-top: 20px;
+}
+
+.record-step .check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.check-row input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 4px;
+  accent-color: #2f7d6f;
+}
+
+.check-row strong {
+  display: block;
+}
+
+.check-row small {
+  display: block;
+  color: #5e6272;
+  font-size: 13px;
+}
+
+.method-options {
+  margin: 12px 0 0;
+  padding: 12px 16px 16px;
+  border: 1px solid #bfc4c3;
+  border-radius: 10px;
+  background-color: #ffffff;
+}
+
+.method-options legend {
+  padding: 0 6px;
+  font-weight: 700;
+}
+
+.inline-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.record-step .inline-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.inline-options input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #2f7d6f;
+}
+
+/* ---------- 9주차 · 제출 결과 ---------- */
+#submit-status {
+  min-height: 24px;
+  margin: 12px 0 0;
+  color: #236054;
+  font-weight: 700;
+}
+
+#submit-status.is-failed {
+  padding: 12px;
+  border-radius: 10px;
+  color: #9d2439;
+  background-color: #f8e3e7;
+}
+
+/* 저장 중에는 버튼이 실제로 잠기고, 모양으로도 눌리지 않음을 보여 줍니다. */
+.record-step button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 #focusHelp {
@@ -566,25 +703,56 @@ body.dark .record-step {
   background-color: #262b2a;
 }
 
-body.dark .record-step input,
+body.dark .record-step input:where(:not([type="checkbox"], [type="radio"])),
 body.dark .record-step select {
   border-color: #4c5553;
   color: #f1f3f2;
   background-color: #1b1f1e;
 }
 
-body.dark #recordError {
+body.dark .field-error {
   color: #f0a0ad;
 }
 
-body.dark .record-step .has-error {
+body.dark .field.has-error input {
   border-color: #f0a0ad;
 }
 
-body.dark .record-step input.has-error:focus,
-body.dark .record-step select.has-error:focus {
+body.dark .field.has-error input:focus {
   border-color: #f0a0ad;
   outline: 3px solid #7d3b45;
+}
+
+body.dark .field-meta p,
+body.dark .check-row small {
+  color: #b9c0be;
+}
+
+body.dark .field.is-valid input {
+  border-color: #6fd0a8;
+}
+
+body.dark .field.is-valid .field-meta p:first-child {
+  color: #8fe0bd;
+}
+
+body.dark .required {
+  color: #9fd9cb;
+  background-color: #23302c;
+}
+
+body.dark .method-options {
+  border-color: #4c5553;
+  background-color: #1b1f1e;
+}
+
+body.dark #submit-status {
+  color: #9fd9cb;
+}
+
+body.dark #submit-status.is-failed {
+  color: #f6c3cc;
+  background-color: #3a2226;
 }
 
 body.dark #recordProgress,
@@ -1031,8 +1199,8 @@ body.dark .week-search input.has-error {
     align-items: stretch;
   }
 
-  /* 체크박스는 제외합니다. 전체 폭으로 늘어나면 안 됩니다. */
-  input:not([type="checkbox"]),
+  /* 체크박스와 라디오는 제외합니다. 전체 폭으로 늘어나면 안 됩니다. */
+  input:not([type="checkbox"]):not([type="radio"]),
   button {
     width: 100%;
   }
@@ -1078,6 +1246,21 @@ body.dark .week-search input.has-error {
     width: 100%;
     margin-top: 12px;
     margin-right: 0;
+  }
+
+  /* 안내와 글자 수를 위아래로 두어 좁은 화면에서 안내 문장이 눌리지 않게 합니다. */
+  .field-meta {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* 라디오 선택지는 손가락으로 누르기 쉽게 한 줄씩 둡니다. */
+  .inline-options {
+    flex-direction: column;
+  }
+
+  .record-step .inline-options label {
+    min-height: 40px;
   }
 
   /* 이번 주 기록: 7칸은 한 줄을 유지하고 글자만 줄입니다. */
