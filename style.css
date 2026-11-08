@@ -19,7 +19,8 @@ a {
   text-decoration: none;
 }
 
-header,
+.header-inner,
+.hero,
 main,
 footer {
   width: 100%;
@@ -30,9 +31,39 @@ footer {
 }
 
 /* ---------- 제목과 내비게이션의 위계 ---------- */
-header {
-  padding-top: 72px;
+.hero {
+  padding-top: 56px;
   padding-bottom: 48px;
+}
+
+/* ---------- 10주차 · 상단 메뉴 ----------
+   스크롤해도 상단에 남아 지금 어느 영역인지 계속 보여 줍니다. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid #e0e4e3;
+  background-color: #f5f7f7;
+}
+
+.header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.brand {
+  color: #236054;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* 메뉴로 이동했을 때 제목이 상단 바에 가려지지 않게 합니다. */
+.content-section {
+  scroll-margin-top: 80px;
 }
 
 .eyebrow {
@@ -69,16 +100,53 @@ h3 {
   font-size: 18px;
 }
 
-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+.main-nav {
+  margin-left: auto;
 }
 
-nav a {
-  padding: 10px 14px;
+.main-nav ul {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.main-nav a {
+  display: block;
+  padding: 8px 14px;
   border-radius: 8px;
+  color: #5e6272;
+  font-size: 15px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+/* 현재 위치: 배경색 + 아래 굵은 선 + aria-current (색만으로 구분하지 않습니다) */
+.main-nav a.is-current {
+  color: #236054;
+  background-color: #d8ece6;
+  box-shadow: inset 0 -3px 0 #2f7d6f;
+}
+
+.menu-toggle {
+  display: none;
+  min-height: 40px;
+  margin-left: auto;
+  padding: 7px 14px;
+  border: 1px solid #bfc4c3;
+  border-radius: 10px;
+  color: #292a31;
+  font: inherit;
+  font-weight: 700;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.menu-toggle:focus {
+  outline: 3px solid #8cc7ba;
+  outline-offset: 3px;
 }
 
 /* ---------- 섹션 공통 영역 ---------- */
@@ -388,7 +456,7 @@ body.dark {
 }
 
 body.dark p,
-body.dark nav a,
+body.dark .main-nav a,
 body.dark .faq-list dd,
 body.dark #userNameCount {
   color: #c8d0ce;
@@ -435,6 +503,27 @@ body.dark .interaction-item input[type="text"] {
 
 body.dark footer {
   color: #9aa4a1;
+}
+
+body.dark .site-header {
+  border-color: #3c4442;
+  background-color: #1b1f1e;
+}
+
+body.dark .brand,
+body.dark .main-nav a.is-current {
+  color: #9fd9cb;
+}
+
+body.dark .main-nav a.is-current {
+  background-color: #23302c;
+  box-shadow: inset 0 -3px 0 #7fc4b4;
+}
+
+body.dark .menu-toggle {
+  border-color: #4c5553;
+  color: #f1f3f2;
+  background-color: #262b2a;
 }
 
 
@@ -781,6 +870,12 @@ body.dark .secondary-button:hover {
 
 /* ---------- 중간고사 · 이번 주 기록 ---------- */
 #weekBoard[hidden],
+#recordGate[hidden],
+#recordProgress[hidden],
+#recordForm[hidden],
+#recordList[hidden],
+#recordEmpty[hidden],
+.record-empty a[hidden],
 #dayDetail[hidden],
 #dayRecords[hidden],
 #dayEmpty[hidden],
@@ -1147,13 +1242,173 @@ body.dark .week-search input.has-error {
 }
 
 
+/* ---------- 10주차 · 기록 시작 조건 ---------- */
+.record-gate {
+  padding: 20px;
+  border: 1px dashed #bfc4c3;
+  border-radius: 12px;
+  background-color: #f7faf9;
+}
+
+.record-gate a {
+  display: inline-block;
+}
+
+/* ---------- 10주차 · 기록 모아 보기 ---------- */
+.record-archive {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e4e3;
+}
+
+.archive-heading p {
+  color: #5e6272;
+}
+
+.archive-count {
+  display: inline-block;
+  margin-left: 6px;
+  color: #236054;
+  font-weight: 700;
+}
+
+.record-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-button {
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1px solid #bfc4c3;
+  border-radius: 10px;
+  color: #292a31;
+  font: inherit;
+  font-weight: 700;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.filter-button:hover {
+  border-color: #2f7d6f;
+}
+
+.filter-button:focus {
+  outline: 3px solid #8cc7ba;
+  outline-offset: 2px;
+}
+
+.filter-button.is-active {
+  border-color: #2f7d6f;
+  color: #ffffff;
+  background-color: #2f7d6f;
+}
+
+.record-list {
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.record-list li + li {
+  margin-top: 8px;
+}
+
+.record-item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e0e4e3;
+  border-radius: 10px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background-color: #f7faf9;
+  cursor: pointer;
+}
+
+.record-item:hover {
+  border-color: #2f7d6f;
+}
+
+.record-item:focus {
+  outline: 3px solid #8cc7ba;
+  outline-offset: 2px;
+}
+
+.record-item-day {
+  flex: none;
+  min-width: 96px;
+  color: #236054;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.record-empty {
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: #fbf3dd;
+}
+
+.record-empty h4 {
+  margin: 0 0 4px;
+}
+
+.record-empty p {
+  margin-bottom: 12px;
+}
+
+.record-empty p:last-of-type:has(+ a[hidden]) {
+  margin-bottom: 0;
+}
+
+.record-empty a {
+  display: inline-block;
+}
+
+body.dark .record-gate,
+body.dark .record-item {
+  border-color: #3c4442;
+  background-color: #1f2423;
+}
+
+body.dark .record-archive {
+  border-color: #3c4442;
+}
+
+body.dark .archive-count,
+body.dark .record-item-day {
+  color: #9fd9cb;
+}
+
+body.dark .filter-button {
+  border-color: #4c5553;
+  color: #f1f3f2;
+  background-color: #262b2a;
+}
+
+body.dark .filter-button.is-active {
+  border-color: #7fc4b4;
+  color: #11201c;
+  background-color: #7fc4b4;
+}
+
+body.dark .record-empty {
+  background-color: #332e1f;
+}
+
 /* ---------- 웹페이지가 표시되는 가로 폭이 768px 이하일 때만 적용 ---------- */
 @media (max-width: 768px) {
   body {
     font-size: 16px;
   }
 
-  header {
+  .hero {
     padding-top: 32px;
     padding-bottom: 24px;
   }
@@ -1168,17 +1423,6 @@ body.dark .week-search input.has-error {
 
   .content-section {
     padding: 24px;
-  }
-
-  /* 가로 메뉴를 위에서 아래로 배치 */
-  nav {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  nav a {
-    padding: 8px 0;
   }
 
   /* 글과 이미지를 한 열로 배치 */
@@ -1300,5 +1544,53 @@ body.dark .week-search input.has-error {
   .delete-confirm button {
     margin-top: 8px;
     margin-right: 0;
+  }
+
+  /* 필터는 한 줄에 두 개씩, 메뉴 버튼은 글자 폭만큼 */
+  .record-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .menu-toggle {
+    width: auto;
+  }
+
+  .record-item {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+/* ---------- 10주차 · 600px 이하: 같은 메뉴를 버튼으로 열고 닫습니다 ----------
+   메뉴 이름·순서·href 는 그대로 두고 보이는 방식만 바꿉니다. */
+@media (max-width: 600px) {
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .site-header .main-nav {
+    display: none;
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .site-header .main-nav.is-open {
+    display: block;
+  }
+
+  .main-nav ul {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+
+  .main-nav a {
+    min-height: 44px;
+    padding: 10px 12px;
   }
 }
