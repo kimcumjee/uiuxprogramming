@@ -15,6 +15,8 @@
   정보 순서: 서비스 소개 → 서비스 정보 → 알림 설정 → 이용 설정 → 오늘 기록 남기기 → 이번 주 기록 → 소식 받기
   중간고사 추가: 기록을 마친 뒤 이번 주에 채운 칸과 연속 일수를 보고, 날짜별 기록을 열어 보고,
   과목으로 찾거나 잘못 남긴 기록을 지운다.
+  9주차 보완: 기록 입력을 하나의 form 으로 묶고, 레이블·안내·오류를 입력칸에 연결한다.
+  공부 방식은 선택했을 때만 열리고 제출되며, 저장 중·완료·실패 결과를 문장으로 알린다.
   -->
 
   <header>
@@ -163,73 +165,141 @@
     </section>
 
 
-    <!-- 오늘 기록 남기기 흐름 (이용 설정의 동의를 마친 뒤에만 열립니다) -->
+    <!-- 오늘 기록 남기기 흐름 (이용 설정의 동의를 마친 뒤에만 열립니다)
+         9주차: 세 단계를 하나의 form 으로 묶어, 버튼과 Enter 가 같은 submit 검증을 거칩니다. -->
     <section id="recordFlow" class="content-section" hidden>
       <h2>오늘 기록 남기기</h2>
       <p id="recordProgress" aria-live="polite">1 / 3 · 과목과 시간</p>
 
-      <section class="record-step" data-step="1">
-        <h3>무엇을 공부했나요</h3>
+      <form id="recordForm" novalidate aria-busy="false">
+        <section class="record-step" data-step="1">
+          <h3>무엇을 공부했나요</h3>
 
-        <label for="recordSubject">공부한 과목</label>
-        <input id="recordSubject" type="text" maxlength="20"
-          aria-describedby="recordError">
+          <div class="field" id="subject-field">
+            <label for="recordSubject">
+              공부한 과목 <span class="required">필수</span>
+            </label>
+            <input
+              id="recordSubject"
+              name="subject"
+              type="text"
+              minlength="2"
+              maxlength="20"
+              required
+              autocomplete="off"
+              placeholder="예: 자료구조"
+              aria-describedby="subject-help subject-count subject-error"
+            >
+            <div class="field-meta">
+              <p id="subject-help">달력에서 알아볼 수 있도록 과목 이름을 2자 이상 입력해 주세요.</p>
+              <p id="subject-count" aria-live="polite">0 / 20자</p>
+            </div>
+            <p id="subject-error" class="field-error" role="alert"></p>
+          </div>
 
-        <label for="recordMinutes">공부한 시간 (분)</label>
-        <input id="recordMinutes" type="number" min="1" max="1440" step="5"
-          aria-describedby="recordError">
+          <div class="field" id="minutes-field">
+            <label for="recordMinutes">
+              공부한 시간 (분) <span class="required">필수</span>
+            </label>
+            <input
+              id="recordMinutes"
+              name="minutes"
+              type="number"
+              inputmode="numeric"
+              min="1"
+              max="1440"
+              step="5"
+              required
+              placeholder="예: 90"
+              aria-describedby="minutes-help minutes-error"
+            >
+            <div class="field-meta">
+              <p id="minutes-help">1분부터 1440분(24시간)까지 숫자로 입력합니다. 10분 단위면 충분합니다.</p>
+            </div>
+            <p id="minutes-error" class="field-error" role="alert"></p>
+          </div>
 
-        <p id="recordError" role="alert"></p>
+          <button id="recordNext1" class="primary-button" type="button">
+            집중도 선택하기
+          </button>
+        </section>
 
-        <button id="recordNext1" class="primary-button" type="button">
-          집중도 선택하기
-        </button>
-      </section>
+        <section class="record-step" data-step="2" hidden>
+          <h3>오늘 집중은 어땠나요</h3>
 
-      <section class="record-step" data-step="2" hidden>
-        <h3>오늘 집중은 어땠나요</h3>
+          <div class="field">
+            <label for="recordFocus">집중도</label>
+            <select id="recordFocus" name="focus" aria-describedby="focusHelp">
+              <option value="좋음">좋음</option>
+              <option value="보통">보통</option>
+              <option value="아쉬움">아쉬움</option>
+            </select>
 
-        <label for="recordFocus">집중도</label>
-        <select id="recordFocus">
-          <option value="좋음">좋음</option>
-          <option value="보통">보통</option>
-          <option value="아쉬움">아쉬움</option>
-        </select>
+            <p id="focusHelp" hidden>
+              집중이 잘 안 된 날은 다음에 30분씩 나눠서 기록해 보세요. 칸은 똑같이 채워집니다.
+            </p>
+          </div>
 
-        <p id="focusHelp" hidden>
-          집중이 잘 안 된 날은 다음에 30분씩 나눠서 기록해 보세요. 칸은 똑같이 채워집니다.
-        </p>
+          <!-- 조건부 입력: 체크했을 때만 공부 방식 선택지가 열리고 제출 데이터에 들어갑니다. -->
+          <div class="field method-field">
+            <label class="check-row" for="methodOption">
+              <input
+                id="methodOption"
+                name="withMethod"
+                type="checkbox"
+                value="included"
+                aria-controls="methodOptions"
+                aria-expanded="false"
+              >
+              <span>
+                <strong>공부 방식도 함께 남길게요</strong>
+                <small>선택 사항입니다. 이번 주 기록에서 어떤 방식으로 공부했는지 함께 보입니다.</small>
+              </span>
+            </label>
 
-        <button id="recordBack2" class="secondary-button" type="button">
-          과목 수정하기
-        </button>
-        <button id="recordNext2" class="primary-button" type="button">
-          기록 내용 확인하기
-        </button>
-      </section>
+            <fieldset id="methodOptions" class="method-options" hidden>
+              <legend>어떻게 공부했나요</legend>
+              <div class="inline-options">
+                <label><input type="radio" name="method" value="강의 듣기" disabled> 강의 듣기</label>
+                <label><input type="radio" name="method" value="문제 풀기" checked disabled> 문제 풀기</label>
+                <label><input type="radio" name="method" value="복습·정리" disabled> 복습·정리</label>
+              </div>
+            </fieldset>
+          </div>
 
-      <section class="record-step" data-step="3" hidden>
-        <h3>기록 내용 확인</h3>
-        <p id="recordSummary"></p>
+          <button id="recordBack2" class="secondary-button" type="button">
+            과목 수정하기
+          </button>
+          <button id="recordNext2" class="primary-button" type="button">
+            기록 내용 확인하기
+          </button>
+        </section>
 
-        <button id="recordBack3" class="secondary-button" type="button">
-          집중도 수정하기
-        </button>
-        <button id="recordComplete" class="primary-button" type="button">
-          오늘 칸 채우기
-        </button>
-      </section>
+        <section class="record-step" data-step="3" hidden>
+          <h3>기록 내용 확인</h3>
+          <p id="recordSummary"></p>
 
-      <section class="record-step" data-step="4" hidden>
-        <h3>오늘 칸을 채웠습니다</h3>
-        <p id="recordDone"></p>
-        <button id="openWeekButton" class="primary-button" type="button">
-          이번 주 기록 보기
-        </button>
-        <button id="recordRestart" class="secondary-button" type="button">
-          다시 기록하기
-        </button>
-      </section>
+          <p id="submit-status" role="status" aria-live="polite"></p>
+
+          <button id="recordBack3" class="secondary-button" type="button">
+            집중도 수정하기
+          </button>
+          <button id="recordComplete" class="primary-button" type="submit">
+            오늘 칸 채우기
+          </button>
+        </section>
+
+        <section class="record-step" data-step="4" hidden>
+          <h3>오늘 칸을 채웠습니다</h3>
+          <p id="recordDone"></p>
+          <button id="openWeekButton" class="primary-button" type="button">
+            이번 주 기록 보기
+          </button>
+          <button id="recordRestart" class="secondary-button" type="button">
+            다시 기록하기
+          </button>
+        </section>
+      </form>
     </section>
 
     <!-- 중간고사 · 이번 주 기록 보기 (기록 완료 화면의 [이번 주 기록 보기]로 열립니다) -->
