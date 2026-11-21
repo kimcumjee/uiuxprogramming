@@ -36,6 +36,40 @@ footer {
   padding-bottom: 48px;
 }
 
+/* ---------- 11주차 · 본문 바로가기 ----------
+   평소에는 화면 위로 숨겨 두고, 키보드 초점이 오면 왼쪽 위에 나타납니다.
+   고정 상단 바(z-index 10)보다 위에 오도록 20 을 줍니다. */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 20;
+  padding: 10px 14px;
+  border: 2px solid #2f7d6f;
+  border-radius: 8px;
+  color: #292a31;
+  font-weight: 700;
+  background-color: #ffffff;
+  transform: translateY(-160%);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  outline: 3px solid #8cc7ba;
+  outline-offset: 3px;
+  transform: translateY(0);
+}
+
+/* 바로가기로 도착한 본문이 상단 바에 가려지지 않게 하고,
+   본문 전체를 감싸는 큰 테두리는 그리지 않습니다. */
+main {
+  scroll-margin-top: 72px;
+}
+
+main:focus {
+  outline: none;
+}
+
 /* ---------- 10주차 · 상단 메뉴 ----------
    스크롤해도 상단에 남아 지금 어느 영역인지 계속 보여 줍니다. */
 .site-header {
@@ -1306,6 +1340,23 @@ body.dark .week-search input.has-error {
   background-color: #2f7d6f;
 }
 
+/* 11주차: 색을 구분하기 어려워도 선택을 찾을 수 있게 굵기와 밑줄을 더합니다.
+   JavaScript 가 붙이는 상태값(aria-current, aria-pressed)을 그대로 읽어 같은 대상을 가리킵니다. */
+.main-nav a[aria-current="page"],
+.filter-button[aria-pressed="true"] {
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+
+.archive-status {
+  min-height: 24px;
+  margin: 0 0 8px;
+  color: #236054;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .record-list {
   margin: 0 0 20px;
   padding: 0;
@@ -1396,6 +1447,16 @@ body.dark .filter-button.is-active {
   border-color: #7fc4b4;
   color: #11201c;
   background-color: #7fc4b4;
+}
+
+body.dark .archive-status {
+  color: #9fd9cb;
+}
+
+body.dark .skip-link {
+  border-color: #7fc4b4;
+  color: #f1f3f2;
+  background-color: #262b2a;
 }
 
 body.dark .record-empty {
