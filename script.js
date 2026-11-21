@@ -176,6 +176,13 @@ function updateCurrentNav() {
       link.removeAttribute("aria-current");
     }
   });
+
+  // 11주차: 현재 메뉴 이름을 브라우저 탭 제목에도 적어, 탭만 보고도 위치를 알 수 있게 합니다.
+  // 메뉴에 없는 주소(#top, #interaction-practice 등)에서는 서비스 이름만 남깁니다.
+  const currentLink = document.querySelector('.main-nav a[aria-current="page"]');
+  document.title = currentLink
+    ? currentLink.textContent.trim() + " | 하루한칸"
+    : "하루한칸";
 }
 
 window.addEventListener("hashchange", updateCurrentNav);
@@ -948,6 +955,7 @@ const filterButtons = document.querySelectorAll(".filter-button");
 const recordList = document.querySelector("#recordList");
 const recordEmpty = document.querySelector("#recordEmpty");
 const recordCount = document.querySelector("#recordCount");
+const archiveStatus = document.querySelector("#archiveStatus");
 let currentFilter = "all";
 
 function getVisibleRecords() {
@@ -972,6 +980,10 @@ function offsetOf(dateKey) {
 function renderRecordList() {
   const visibleRecords = getVisibleRecords();
 
+  // 기록을 지우거나 새로 저장해 목록이 바뀌면 이전 필터 결과 문장은 맞지 않으므로 비웁니다.
+  // 필터 버튼을 눌렀을 때만 이 함수 다음에 새 결과 문장을 적습니다.
+  archiveStatus.textContent = "";
+
   recordList.replaceChildren();
   recordEmpty.hidden = visibleRecords.length !== 0;
   recordList.hidden = visibleRecords.length === 0;
@@ -986,9 +998,12 @@ function renderRecordList() {
       ? "집중도 '" + currentFilter + "' 기록이 이번 주에 없어요."
       : "아직 남긴 기록이 없어요.";
     emptyDescription.textContent = filtered
-      ? "다른 집중도를 선택하거나 [전체]를 눌러 모든 기록을 보세요."
+      ? "다른 집중도를 선택하거나 [전체 보기]를 눌러 모든 기록을 보세요."
       : "오늘 공부한 것을 기록하면 이곳에 한 줄씩 모입니다.";
-    emptyAction.hidden = filtered;
+    // 11주차: 걸러서 비었을 때도 다음 행동을 남깁니다. [전체 보기]로 바로 돌아갈 수 있습니다.
+    emptyAction.hidden = false;
+    emptyAction.textContent = filtered ? "전체 보기" : "오늘 기록하러 가기";
+    emptyAction.href = filtered ? "#weekBoard" : "#recordFlow";
   }
 
   recordCount.textContent = String(visibleRecords.length);
@@ -1033,7 +1048,25 @@ filterButtons.forEach(function (button) {
     });
 
     renderRecordList();
+
+    // 11주차: 버튼 문구와 표시된 기록 수로 결과를 문장으로 알립니다.
+    const count = getVisibleRecords().length;
+    const filterName = button.textContent.trim();
+    archiveStatus.textContent = count > 0
+      ? filterName + " 기록 " + count + "개가 표시됩니다."
+      : filterName + " 기록이 없습니다. 다른 조건을 선택하거나 [전체 보기]를 눌러 보세요.";
   });
+});
+
+// 11주차: 결과 없음에서 [전체 보기]를 누르면 전체 필터를 실행하고 그 버튼으로 초점을 옮깁니다.
+// 기록이 하나도 없을 때는 원래 링크대로 오늘 기록으로 이동합니다.
+recordEmpty.querySelector("a").addEventListener("click", function (event) {
+  if (currentFilter === "all") return;
+
+  event.preventDefault();
+  const allButton = document.querySelector('.filter-button[data-filter="all"]');
+  allButton.click();
+  allButton.focus();
 });
 
 // 이번 주 기록은 처음부터 보이므로 페이지를 열 때 한 번 그립니다.
