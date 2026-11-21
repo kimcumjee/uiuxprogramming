@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- 11주차: 첫 Tab 에서 메뉴를 건너뛰고 본문으로 바로 이동할 수 있게 합니다. -->
+  <a class="skip-link" href="#top">본문 바로가기</a>
+
   <!--
   사용자: 혼자 공부하지만 며칠 지나면 기록이 끊기는 대학생과 자격증 준비생
   목적: 하루한칸이 어떤 서비스이고 기록이 왜 한 칸으로 남는지 이해한다.
@@ -19,6 +22,7 @@
   공부 방식은 선택했을 때만 열리고 제출되며, 저장 중·완료·실패 결과를 문장으로 알린다.
   10주차 보완: 서비스 소개 · 오늘 기록 · 이번 주 기록 세 메뉴로 목적지를 찾고 현재 위치를 확인한다.
   저장된 기록은 집중도로 걸러 보고, 600px 이하에서는 메뉴 버튼으로 같은 경로를 연다.
+  11주차 보완: 색만으로 상태를 구분하지 않고, 본문 바로가기·탭 제목·결과 알림으로 키보드와 화면 낭독기 사용자도 같은 과업을 끝낸다.
   -->
 
   <!-- 10주차: 사용자가 이해 → 기록 → 결과 확인 순서로 찾는 세 영역만 메뉴에 둡니다.
@@ -48,7 +52,7 @@
     <p class="header-description">하루 10분, 오늘 공부한 것을 한 칸씩 채워 학습 습관이 끊기지 않게 합니다.</p>
   </div>
 
-  <main>
+  <main id="top" tabindex="-1">
     <section id="about" class="content-section">
       <h2>서비스 소개</h2>
       <div class="about-layout">
@@ -67,7 +71,7 @@
         <img
           class="service-image"
           src="./assets/images/service.jpg"
-          alt="한 달치 학습 기록 달력. 21칸 중 18칸이 진한 색으로 채워져 있고 오늘 칸은 점선과 더하기 기호로 기록을 기다리고 있다."
+          alt="9월 학습 기록 달력. 21칸 중 16칸이 진한 초록으로 채워지고 4칸은 비어 있으며, 마지막 오늘 칸은 점선과 더하기 기호로 기록을 기다리고 있다."
         >
       </div>
     </section>
@@ -162,7 +166,7 @@
           maxlength="10"
           placeholder="10자 이내로 입력"
         >
-        <p id="userNameCount" aria-live="polite">0 / 10</p>
+        <p id="userNameCount">0 / 10</p>
       </div>
 
       <div class="interaction-item">
@@ -214,7 +218,7 @@
             >
             <div class="field-meta">
               <p id="subject-help">달력에서 알아볼 수 있도록 과목 이름을 2자 이상 입력해 주세요.</p>
-              <p id="subject-count" aria-live="polite">0 / 20자</p>
+              <p id="subject-count">0 / 20자</p>
             </div>
             <p id="subject-error" class="field-error" role="alert"></p>
           </div>
@@ -378,6 +382,9 @@
           <button class="filter-button"
             type="button" data-filter="아쉬움" aria-pressed="false">아쉬움</button>
         </div>
+
+        <!-- 11주차: 필터를 누르면 결과 수나 결과 없음을 화면 낭독기에도 알립니다. -->
+        <p id="archiveStatus" class="archive-status" role="status" aria-live="polite"></p>
 
         <ul id="recordList" class="record-list"></ul>
 
