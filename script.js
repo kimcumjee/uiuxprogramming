@@ -171,7 +171,8 @@ function updateCurrentNav() {
     link.classList.toggle("is-current", current);
 
     if (current) {
-      link.setAttribute("aria-current", "page");
+      // 12주차: 한 페이지 안의 본문 위치이므로 page 대신 location 을 씁니다.
+      link.setAttribute("aria-current", "location");
     } else {
       link.removeAttribute("aria-current");
     }
@@ -179,7 +180,7 @@ function updateCurrentNav() {
 
   // 11주차: 현재 메뉴 이름을 브라우저 탭 제목에도 적어, 탭만 보고도 위치를 알 수 있게 합니다.
   // 메뉴에 없는 주소(#top, #interaction-practice 등)에서는 서비스 이름만 남깁니다.
-  const currentLink = document.querySelector('.main-nav a[aria-current="page"]');
+  const currentLink = document.querySelector('.main-nav a[aria-current="location"]');
   document.title = currentLink
     ? currentLink.textContent.trim() + " | 하루한칸"
     : "하루한칸";
@@ -239,7 +240,8 @@ const recordSteps = document.querySelectorAll(".record-step");
 const recordProgress = document.querySelector("#recordProgress");
 const recordSubject = document.querySelector("#recordSubject");
 const recordMinutes = document.querySelector("#recordMinutes");
-const recordFocus = document.querySelector("#recordFocus");
+// 12주차: 집중도는 선택 카드(라디오 그룹)입니다. 지금 고른 값은 :checked 로 찾습니다.
+const focusInputs = [...document.querySelectorAll('input[name="focus"]')];
 const focusHelp = document.querySelector("#focusHelp");
 const recordSummary = document.querySelector("#recordSummary");
 const recordDone = document.querySelector("#recordDone");
@@ -444,8 +446,10 @@ document.querySelector("#recordNext1").addEventListener("click", function () {
 });
 
 /* ---------- 2단계: 선택에 따른 조건부 안내 ---------- */
-recordFocus.addEventListener("change", function () {
-  focusHelp.hidden = recordFocus.value !== "아쉬움";
+focusInputs.forEach(function (input) {
+  input.addEventListener("change", function () {
+    focusHelp.hidden = input.value !== "아쉬움";
+  });
 });
 
 // 이전으로 돌아가도 입력한 값은 지우지 않습니다.
@@ -977,6 +981,72 @@ function offsetOf(dateKey) {
   return null;
 }
 
+/* ---------- 12주차 · 기록 카드 컴포넌트 ----------
+   기록 한 건을 받아 카드(li) 한 장을 돌려줍니다.
+   - 함께 쓰는 것: 카드 간격, 버튼 높이, 글자 위계 (CSS 의 .record-card)
+   - 항목마다 다른 것: 과목, 날짜, 시간, 공부 방식
+   - 상태에 따라 바뀌는 것: 집중도 라벨 문구, 카드 윗선·라벨 모양(is-good / is-normal / is-low) */
+const focusStates = {
+  "좋음": { className: "is-good", label: "집중 좋음" },
+  "보통": { className: "is-normal", label: "집중 보통" },
+  "아쉬움": { className: "is-low", label: "집중 아쉬움" }
+};
+
+function createText(tagName, className, text) {
+  const element = document.createElement(tagName);
+  element.className = className;
+  element.textContent = text;   // 사용자가 입력한 과목명이 들어가므로 textContent 로 넣습니다.
+  return element;
+}
+
+function createRecordCard(record) {
+  const offset = offsetOf(record.date);
+  const date = daysAgo(offset);
+  const state = focusStates[record.focus] || focusStates["보통"];
+
+  const card = document.createElement("li");
+  card.className = "record-card " + state.className;
+
+  const top = document.createElement("div");
+  top.className = "record-card-top";
+  top.append(createText("span", "record-state", state.label));
+
+  // 화면에는 읽기 쉬운 날짜, datetime 에는 기계가 읽는 날짜를 둡니다.
+  const time = createText("time", "record-date",
+    (offset === 0 ? "오늘 · " : "") + formatDay(date));
+  time.dateTime = record.date;
+  top.append(time);
+
+  card.append(top);
+  card.append(createText("h4", "record-subject", record.subject));
+  card.append(createText("p", "record-meta",
+    record.minutes + "분" + (record.method ? " · " + record.method : "")));
+
+  // 아쉬운 날의 카드에만 다음 행동을 덧붙입니다.
+  if (record.focus === "아쉬움") {
+    card.append(createText("p", "record-tip", "다음에는 30분씩 나눠서 기록해 보세요."));
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "record-actions";
+
+  const openButton = createText("button", "secondary-button", "이 날 칸 보기");
+  openButton.type = "button";
+  openButton.dataset.action = "open";
+  openButton.dataset.id = record.id;
+  openButton.setAttribute("aria-label", formatDay(date) + " " + record.subject + " 기록이 있는 칸 보기");
+
+  const deleteButton = createText("button", "secondary-button danger-text", "지우기");
+  deleteButton.type = "button";
+  deleteButton.dataset.action = "delete";
+  deleteButton.dataset.id = record.id;
+  deleteButton.setAttribute("aria-label", formatDay(date) + " " + record.subject + " 기록 지우기");
+
+  actions.append(openButton, deleteButton);
+  card.append(actions);
+  return card;
+}
+
 function renderRecordList() {
   const visibleRecords = getVisibleRecords();
 
@@ -1009,31 +1079,9 @@ function renderRecordList() {
   recordCount.textContent = String(visibleRecords.length);
   recordCount.setAttribute("aria-label", "현재 표시 중인 기록 " + visibleRecords.length + "개");
 
+  // 12주차: 카드 한 장은 createRecordCard() 가 만들고, 이 함수는 범위·개수·결과 없음만 정합니다.
   visibleRecords.forEach(function (record) {
-    const offset = offsetOf(record.date);
-    const date = daysAgo(offset);
-
-    // 누르면 그날 칸을 열어 자세한 기록과 지우기를 볼 수 있습니다.
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "record-item";
-
-    const day = document.createElement("span");
-    day.className = "record-item-day";
-    day.textContent = offset === 0 ? "오늘" : formatDay(date);
-
-    const text = document.createElement("span");
-    text.textContent = describeRecord(record);   // 사용자가 입력한 과목명이므로 textContent
-
-    button.append(day, text);
-    button.setAttribute("aria-label", formatDay(date) + " " + describeRecord(record) + ", 이 날 칸 열기");
-    button.addEventListener("click", function () {
-      selectDay(offset);
-    });
-
-    const item = document.createElement("li");
-    item.appendChild(button);
-    recordList.appendChild(item);
+    recordList.append(createRecordCard(record));
   });
 }
 
@@ -1056,6 +1104,30 @@ filterButtons.forEach(function (button) {
       ? filterName + " 기록 " + count + "개가 표시됩니다."
       : filterName + " 기록이 없습니다. 다른 조건을 선택하거나 [전체 보기]를 눌러 보세요.";
   });
+});
+
+// 12주차: 카드마다 이벤트를 붙이지 않고 목록 하나에서 data-action 으로 행동을 나눕니다.
+recordList.addEventListener("click", function (event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const record = records.find(function (item) {
+    return item.id === Number(button.dataset.id);
+  });
+  if (!record) return;
+
+  const offset = offsetOf(record.date);
+
+  if (button.dataset.action === "open") {
+    selectDay(offset);
+    return;
+  }
+
+  if (button.dataset.action !== "delete") return;
+
+  // 바로 지우지 않고 그날 칸을 연 뒤 기존 확인 상자([취소]에 초점)를 보여 줍니다.
+  selectDay(offset);
+  askDelete(record.id);
 });
 
 // 11주차: 결과 없음에서 [전체 보기]를 누르면 전체 필터를 실행하고 그 버튼으로 초점을 옮깁니다.
